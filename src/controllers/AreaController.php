@@ -234,4 +234,38 @@ class AreaController
         echo json_encode(['success' => true, 'checkpoint' => $checkPoint]);
         exit;
     }
+
+    public static function updateCheckPoint(int $areaId, int $checkPointId): void
+    {
+        Auth::requireAuth();
+        Permission::requirePerm('edit', 'checks');
+        Csrf::requireValidToken();
+
+        $checkPoint = CheckPoint::find($checkPointId);
+        if (!$checkPoint || $checkPoint['area_id'] != $areaId) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Checkpoint not found']);
+            exit;
+        }
+
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        // Update with existing data, only changing what's provided
+        $updateData = [
+            'reference' => $data['reference'] ?? $checkPoint['reference'],
+            'label' => $data['label'] ?? $checkPoint['label'],
+            'check_type_id' => $data['check_type_id'] ?? $checkPoint['check_type_id'],
+            'x_coord' => $data['x_coord'] ?? $checkPoint['x_coord'],
+            'y_coord' => $data['y_coord'] ?? $checkPoint['y_coord'],
+            'periodicity' => $data['periodicity'] ?? $checkPoint['periodicity'],
+            'notes' => $data['notes'] ?? $checkPoint['notes'],
+            'radius' => $data['radius'] ?? $checkPoint['radius'] ?? 10,
+            'custom_colour' => $data['custom_colour'] ?? $checkPoint['custom_colour']
+        ];
+
+        CheckPoint::update($checkPointId, $updateData);
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
 }

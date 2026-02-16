@@ -6,6 +6,10 @@ let scale = 1.0;
 let canvas = null;
 let ctx = null;
 let isAddingCheckPoint = false;
+let isDragging = false;
+let draggedPoint = null;
+let dragOffset = { x: 0, y: 0 };
+let selectedPoint = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -90,16 +94,80 @@ function setupControls() {
         });
     }
 
-    // Handle canvas clicks
-    canvas.addEventListener('click', function(e) {
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / canvas.width;
-        const y = (e.clientY - rect.top) / canvas.height;
+    // Handle canvas interactions
+    canvas.addEventListener('mousedown', function(e) {
+        if (isAddingCheckPoint) return;
 
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        // Check if clicking on a checkpoint
+        const point = getCheckPointAtPosition(clickX, clickY);
+        if (point) {
+            if (e.shiftKey) {
+                // Shift+click = edit properties
+                showEditCheckPointModal(point);
+            } else {
+                // Regular click = start dragging
+                isDragging = true;
+                draggedPoint = point;
+                const pointX = point.x_coord * canvas.width;
+                const pointY = point.y_coord * canvas.height;
+                dragOffset.x = clickX - pointX;
+                dragOffset.y = clickY - pointY;
+                canvas.style.cursor = 'grabbing';
+            }
+        }
+    });
+
+    canvas.addEventListener('mousemove', function(e) {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        if (isDragging && draggedPoint) {
+            // Update position
+            const newX = (mouseX - dragOffset.x) / canvas.width;
+            const newY = (mouseY - dragOffset.y) / canvas.height;
+
+            // Clamp to canvas bounds
+            draggedPoint.x_coord = Math.max(0, Math.min(1, newX));
+            draggedPoint.y_coord = Math.max(0, Math.min(1, newY));
+
+            // Re-render
+            renderPage(pageNum);
+        } else if (!isAddingCheckPoint) {
+            // Update cursor
+            const point = getCheckPointAtPosition(mouseX, mouseY);
+            canvas.style.cursor = point ? 'grab' : 'default';
+        }
+    });
+
+    canvas.addEventListener('mouseup', function(e) {
+        if (isDragging && draggedPoint) {
+            // Save new position
+            updateCheckPointPosition(draggedPoint);
+            isDragging = false;
+            draggedPoint = null;
+            canvas.style.cursor = 'default';
+        }
+    });
+
+    canvas.addEventListener('click', function(e) {
         if (isAddingCheckPoint) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / canvas.width;
+            const y = (e.clientY - rect.top) / canvas.height;
             showAddCheckPointModal(x, y);
-        } else {
-            checkCheckPointClick(e.clientX - rect.left, e.clientY - rect.top);
+        } else if (!isDragging) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            const point = getCheckPointAtPosition(clickX, clickY);
+            if (point) {
+                showCheckPointModal(point);
+            }
         }
     });
 }
@@ -115,22 +183,24 @@ function renderCheckPoints() {
 function drawCheckPoint(point) {
     const x = point.x_coord * canvas.width;
     const y = point.y_coord * canvas.height;
-    const radius = 10;
+    const radius = point.radius || 10;
 
-    // Determine color based on status
-    let color;
-    switch (point.status) {
-        case 'ok':
-            color = '#16a34a';
-            break;
-        case 'due_soon':
-            color = '#d97706';
-            break;
-        case 'overdue':
-            color = '#dc2626';
-            break;
-        default:
-            color = '#9ca3af';
+    // Use custom color if set, otherwise determine by status
+    let color = point.custom_colour;
+    if (!color) {
+        switch (point.status) {
+            case 'ok':
+                color = '#16a34a';
+                break;
+            case 'due_soon':
+                color = '#d97706';
+                break;
+            case 'overdue':
+                color = '#dc2626';
+                break;
+            default:
+                color = point.type_colour || '#9ca3af';
+        }
     }
 
     // Draw circle
@@ -143,26 +213,52 @@ function drawCheckPoint(point) {
     ctx.stroke();
 
     // Draw reference label
-    ctx.font = 'bold 10px sans-serif';
+    const fontSize = Math.max(8, Math.min(12, radius * 0.8));
+    ctx.font = `bold ${fontSize}px sans-serif`;
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
-    ctx.fillText(point.reference, x, y + 4);
+    ctx.fillText(point.reference, x, y + fontSize/3);
 }
 
-function checkCheckPointClick(clickX, clickY) {
-    if (!checkPoints) return;
+function getCheckPointAtPosition(clickX, clickY) {
+    if (!checkPoints) return null;
 
     for (let point of checkPoints) {
         const x = point.x_coord * canvas.width;
         const y = point.y_coord * canvas.height;
-        const radius = 10;
+        const radius = point.radius || 10;
 
         const distance = Math.sqrt((clickX - x) ** 2 + (clickY - y) ** 2);
         if (distance <= radius) {
-            showCheckPointModal(point);
-            return;
+            return point;
         }
     }
+    return null;
+}
+
+function updateCheckPointPosition(point) {
+    fetch('/areas/' + area.id + '/checkpoints/' + point.id, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            x_coord: point.x_coord,
+            y_coord: point.y_coord,
+            csrf_token: csrfToken
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (!result.success) {
+            alert('Error updating position: ' + (result.error || 'Unknown error'));
+            location.reload();
+        }
+    })
+    .catch(error => {
+        alert('Error updating position: ' + error.message);
+        location.reload();
+    });
 }
 
 function showCheckPointModal(point) {
@@ -178,12 +274,17 @@ function showCheckPointModal(point) {
         lastCheckInfo += ' (' + point.last_check.status + ')';
     }
 
+    const canEdit = typeof Permission !== 'undefined' ? Permission.can('edit', 'checks') : canPerformChecks;
+
     modalBody.innerHTML = `
         <p><strong>Type:</strong> ${point.type_name}</p>
         <p><strong>Periodicity:</strong> ${point.periodicity}</p>
         <p><strong>Status:</strong> <span class="badge badge-${point.status}">${point.status}</span></p>
         <p><strong>${lastCheckInfo}</strong></p>
         ${point.notes ? '<p><strong>Notes:</strong><br>' + point.notes + '</p>' : ''}
+        <p style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem;">
+            💡 <strong>Tip:</strong> Drag to move • Shift+Click to edit size/color
+        </p>
         ${canPerformChecks ? `
             <div class="form-group mt-3">
                 <button class="btn btn-success btn-block" onclick="performCheck(${point.id}, 'pass')">✓ Pass</button>
@@ -191,6 +292,49 @@ function showCheckPointModal(point) {
             </div>
         ` : ''}
     `;
+
+    modal.classList.add('active');
+}
+
+function showEditCheckPointModal(point) {
+    const modal = document.getElementById('checkPointModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+
+    selectedPoint = point;
+    modalTitle.textContent = 'Edit: ' + point.reference + ' - ' + point.label;
+
+    const currentRadius = point.radius || 10;
+    const currentColor = point.custom_colour || '';
+
+    modalBody.innerHTML = `
+        <div class="form-group">
+            <label for="edit_radius">Size (radius in pixels)</label>
+            <input type="range" id="edit_radius" min="5" max="30" value="${currentRadius}" class="form-control">
+            <span id="radiusValue">${currentRadius}px</span>
+        </div>
+        <div class="form-group">
+            <label for="edit_colour">Custom Color (leave empty to use type color)</label>
+            <input type="color" id="edit_colour" value="${currentColor || '#2563eb'}" class="form-control">
+            <label style="margin-top: 0.5rem;">
+                <input type="checkbox" id="use_custom_colour" ${currentColor ? 'checked' : ''}> Use custom color
+            </label>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveCheckPointEdit()">Save</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+    `;
+
+    // Update radius display
+    document.getElementById('edit_radius').addEventListener('input', function(e) {
+        document.getElementById('radiusValue').textContent = e.target.value + 'px';
+        // Live preview
+        if (selectedPoint) {
+            selectedPoint.radius = parseInt(e.target.value);
+            renderPage(pageNum);
+        }
+    });
 
     modal.classList.add('active');
 }
@@ -320,10 +464,45 @@ function performCheck(checkPointId, status) {
     });
 }
 
+function saveCheckPointEdit() {
+    if (!selectedPoint) return;
+
+    const radius = parseInt(document.getElementById('edit_radius').value);
+    const useCustomColor = document.getElementById('use_custom_colour').checked;
+    const customColor = useCustomColor ? document.getElementById('edit_colour').value : null;
+
+    fetch('/areas/' + area.id + '/checkpoints/' + selectedPoint.id, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            radius: radius,
+            custom_colour: customColor,
+            csrf_token: csrfToken
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            selectedPoint.radius = radius;
+            selectedPoint.custom_colour = customColor;
+            closeModal();
+            renderPage(pageNum);
+        } else {
+            alert('Error: ' + (result.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error saving changes: ' + error.message);
+    });
+}
+
 function closeModal() {
     const modal = document.getElementById('checkPointModal');
     modal.classList.remove('active');
     isAddingCheckPoint = false;
+    selectedPoint = null;
     const addBtn = document.getElementById('addCheckPoint');
     if (addBtn) {
         addBtn.textContent = 'Add Check Point';

@@ -148,6 +148,10 @@ try {
         AreaController::addCheckPoint((int) $matches[1]);
         exit;
     }
+    if (preg_match('#^/areas/(\d+)/checkpoints/(\d+)$#', $path, $matches) && $method === 'POST') {
+        AreaController::updateCheckPoint((int) $matches[1], (int) $matches[2]);
+        exit;
+    }
 
     // Check Type routes
     if (preg_match('#^/check-types$#', $path)) {

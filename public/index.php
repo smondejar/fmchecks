@@ -20,6 +20,9 @@ function debugLog($message) {
 
 debugLog("=== NEW REQUEST ===");
 debugLog("REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'NONE'));
+debugLog("SCRIPT_NAME: " . ($_SERVER['SCRIPT_NAME'] ?? 'NONE'));
+debugLog("REDIRECT_STATUS: " . ($_SERVER['REDIRECT_STATUS'] ?? 'NONE'));
+debugLog("REDIRECT_URL: " . ($_SERVER['REDIRECT_URL'] ?? 'NONE'));
 
 try {
     debugLog("Line 25: Starting execution");

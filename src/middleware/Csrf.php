@@ -18,7 +18,23 @@ class Csrf
 
     public static function validate(): bool
     {
+        // Check POST data first
         $token = $_POST['csrf_token'] ?? '';
+
+        // If not in POST, check JSON body
+        if (empty($token)) {
+            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+            if (strpos($contentType, 'application/json') !== false) {
+                $jsonData = json_decode(file_get_contents('php://input'), true);
+                $token = $jsonData['csrf_token'] ?? '';
+            }
+        }
+
+        // Check custom header as fallback
+        if (empty($token)) {
+            $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        }
+
         $sessionToken = $_SESSION['csrf_token'] ?? '';
 
         return !empty($token) && !empty($sessionToken) && hash_equals($sessionToken, $token);

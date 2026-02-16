@@ -262,7 +262,8 @@ function addCheckPointToArea() {
         periodicity: document.getElementById('periodicity').value,
         x_coord: document.getElementById('x_coord').value,
         y_coord: document.getElementById('y_coord').value,
-        notes: document.getElementById('notes').value
+        notes: document.getElementById('notes').value,
+        csrf_token: csrfToken
     };
 
     fetch('/areas/' + area.id + '/add-checkpoint', {
@@ -280,6 +281,9 @@ function addCheckPointToArea() {
         } else {
             alert('Error: ' + result.error);
         }
+    })
+    .catch(error => {
+        alert('Error adding checkpoint: ' + error.message);
     });
 }
 
@@ -300,7 +304,7 @@ function performCheck(checkPointId, status) {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status, notes, severity })
+        body: JSON.stringify({ status, notes, severity, csrf_token: csrfToken })
     })
     .then(response => response.json())
     .then(result => {
@@ -310,6 +314,9 @@ function performCheck(checkPointId, status) {
         } else {
             alert('Error: ' + result.error);
         }
+    })
+    .catch(error => {
+        alert('Error performing check: ' + error.message);
     });
 }
 

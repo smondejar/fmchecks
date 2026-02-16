@@ -1,0 +1,11 @@
+# Debug .htaccess - routes to index-debug.php
+RewriteEngine On
+
+# Allow direct access to test files
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule \.(php|css|js|png|jpg|gif|ico)$ - [L]
+
+# Route everything else to debug router
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index-debug.php [QSA,L]

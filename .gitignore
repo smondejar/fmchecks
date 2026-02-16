@@ -1,0 +1,44 @@
+# FM Checks - Git Ignore
+
+# Database config
+config/database.local.php
+
+# Uploaded files
+public/uploads/*
+!public/uploads/.gitkeep
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+error_log
+
+# Temporary files
+tmp/
+temp/
+
+# Environment files
+.env
+.env.local
+
+# Composer
+/vendor/
+composer.lock
+
+# Node modules (if using npm)
+node_modules/
+package-lock.json
+
+# Cache
+cache/
+*.cache

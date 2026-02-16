@@ -256,16 +256,15 @@ try {
 
     // 404 Not Found
     http_response_code(404);
-    $errorCode = 404;
-    $errorTitle = 'Page Not Found';
-    $errorMessage = 'The page you are looking for does not exist.';
-    require __DIR__ . '/../src/views/error.php';
+    echo "<h1>404 Not Found</h1>";
+    echo "<p>The page you are looking for does not exist.</p>";
+    echo "<p>Path: " . htmlspecialchars($path) . "</p>";
 
 } catch (Exception $e) {
-    error_log($e->getMessage());
+    // TEMPORARILY SHOW RAW ERROR - NO ERROR PAGE
     http_response_code(500);
-    $errorCode = 500;
-    $errorTitle = 'Server Error';
-    $errorMessage = 'An unexpected error occurred. Please try again later.';
-    require __DIR__ . '/../src/views/error.php';
+    echo "<h1>500 Error</h1>";
+    echo "<p><strong>Message:</strong> " . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "<p><strong>File:</strong> " . htmlspecialchars($e->getFile()) . ":" . $e->getLine() . "</p>";
+    echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
 }

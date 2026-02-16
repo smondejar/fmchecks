@@ -27,8 +27,10 @@ require __DIR__ . '/../src/controllers/SettingsController.php';
 
 // Error handling
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);  // TEMPORARILY ENABLED to debug routing issues
 
+// TEMPORARILY DISABLED exception handler to see full error messages
+/*
 set_exception_handler(function ($exception) {
     error_log($exception->getMessage());
     http_response_code(500);
@@ -38,6 +40,7 @@ set_exception_handler(function ($exception) {
     require __DIR__ . '/../src/views/error.php';
     exit;
 });
+*/
 
 // Parse request
 $requestUri = $_SERVER['REQUEST_URI'];

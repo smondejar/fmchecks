@@ -48,15 +48,20 @@ class CheckController
             'photo_path' => $data['photo_path'] ?? null
         ]);
 
-        // If failed, create a report
-        if ($data['status'] === 'fail') {
+        $reportId = null;
+
+        // If failed and user wants to create a report
+        if ($data['status'] === 'fail' && ($data['create_report'] ?? true)) {
+            $reportTitle = $data['report_title'] ?? 'Check failure: ' . $checkPoint['reference'] . ' - ' . $checkPoint['label'];
+            $reportDescription = $data['report_description'] ?? $data['notes'] ?? 'Check failed';
+
             $reportId = Report::create([
                 'check_log_id' => $logId,
                 'check_point_id' => $checkPointId,
                 'venue_id' => $checkPoint['venue_id'],
                 'area_id' => $checkPoint['area_id'],
-                'title' => 'Check failure: ' . $checkPoint['reference'] . ' - ' . $checkPoint['label'],
-                'description' => $data['notes'] ?? 'Check failed',
+                'title' => $reportTitle,
+                'description' => $reportDescription,
                 'severity' => $data['severity'] ?? 'medium',
                 'status' => 'open',
                 'created_by' => Auth::id()
@@ -66,7 +71,7 @@ class CheckController
         echo json_encode([
             'success' => true,
             'log_id' => $logId,
-            'report_id' => $reportId ?? null
+            'report_id' => $reportId
         ]);
         exit;
     }

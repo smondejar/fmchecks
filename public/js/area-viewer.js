@@ -6,10 +6,12 @@ let scale = 1.0;
 let canvas = null;
 let ctx = null;
 let isAddingCheckPoint = false;
+let isEditMode = false;
 let isDragging = false;
 let draggedPoint = null;
 let dragOffset = { x: 0, y: 0 };
 let selectedPoint = null;
+let pdfRendered = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -51,6 +53,7 @@ function renderPage(num) {
         };
 
         page.render(renderContext).promise.then(function() {
+            pdfRendered = true;
             renderCheckPoints();
         });
     });
@@ -104,20 +107,15 @@ function setupControls() {
 
         // Check if clicking on a checkpoint
         const point = getCheckPointAtPosition(clickX, clickY);
-        if (point) {
-            if (e.shiftKey) {
-                // Shift+click = edit properties
-                showEditCheckPointModal(point);
-            } else {
-                // Regular click = start dragging
-                isDragging = true;
-                draggedPoint = point;
-                const pointX = point.x_coord * canvas.width;
-                const pointY = point.y_coord * canvas.height;
-                dragOffset.x = clickX - pointX;
-                dragOffset.y = clickY - pointY;
-                canvas.style.cursor = 'grabbing';
-            }
+        if (point && isEditMode) {
+            // In edit mode: allow dragging
+            isDragging = true;
+            draggedPoint = point;
+            const pointX = point.x_coord * canvas.width;
+            const pointY = point.y_coord * canvas.height;
+            dragOffset.x = clickX - pointX;
+            dragOffset.y = clickY - pointY;
+            canvas.style.cursor = 'grabbing';
         }
     });
 
@@ -135,12 +133,16 @@ function setupControls() {
             draggedPoint.x_coord = Math.max(0, Math.min(1, newX));
             draggedPoint.y_coord = Math.max(0, Math.min(1, newY));
 
-            // Re-render
-            renderPage(pageNum);
+            // Only redraw checkpoints, not the entire PDF!
+            renderCheckPoints();
         } else if (!isAddingCheckPoint) {
             // Update cursor
             const point = getCheckPointAtPosition(mouseX, mouseY);
-            canvas.style.cursor = point ? 'grab' : 'default';
+            if (isEditMode) {
+                canvas.style.cursor = point ? 'grab' : 'default';
+            } else {
+                canvas.style.cursor = point ? 'pointer' : 'default';
+            }
         }
     });
 
@@ -166,18 +168,42 @@ function setupControls() {
             const clickY = e.clientY - rect.top;
             const point = getCheckPointAtPosition(clickX, clickY);
             if (point) {
-                showCheckPointModal(point);
+                if (e.shiftKey || isEditMode) {
+                    // Shift+click or edit mode = edit properties
+                    showEditCheckPointModal(point);
+                } else {
+                    // Regular click = perform check
+                    showCheckPointModal(point);
+                }
             }
         }
     });
 }
 
 function renderCheckPoints() {
-    if (!checkPoints || checkPoints.length === 0) return;
+    if (!checkPoints || checkPoints.length === 0 || !pdfRendered) return;
 
-    checkPoints.forEach(function(point) {
-        drawCheckPoint(point);
-    });
+    // Clear previous checkpoints (redraw PDF section if needed)
+    if (isDragging) {
+        // During drag, re-render the page to clear old positions
+        pdfDoc.getPage(pageNum).then(function(page) {
+            const viewport = page.getViewport({ scale: scale });
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+            page.render(renderContext).promise.then(function() {
+                // Now draw all checkpoints
+                checkPoints.forEach(function(point) {
+                    drawCheckPoint(point);
+                });
+            });
+        });
+    } else {
+        checkPoints.forEach(function(point) {
+            drawCheckPoint(point);
+        });
+    }
 }
 
 function drawCheckPoint(point) {
@@ -283,17 +309,135 @@ function showCheckPointModal(point) {
         <p><strong>${lastCheckInfo}</strong></p>
         ${point.notes ? '<p><strong>Notes:</strong><br>' + point.notes + '</p>' : ''}
         <p style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem;">
-            💡 <strong>Tip:</strong> Drag to move • Shift+Click to edit size/color
+            💡 <strong>Tip:</strong> Shift+Click to edit size/color/position
         </p>
         ${canPerformChecks ? `
             <div class="form-group mt-3">
                 <button class="btn btn-success btn-block" onclick="performCheck(${point.id}, 'pass')">✓ Pass</button>
-                <button class="btn btn-danger btn-block" onclick="performCheck(${point.id}, 'fail')">✗ Fail</button>
+                <button class="btn btn-danger btn-block" onclick="showFailCheckDialog(${point.id})">✗ Fail</button>
             </div>
         ` : ''}
     `;
 
     modal.classList.add('active');
+}
+
+function showFailCheckDialog(checkPointId) {
+    const modal = document.getElementById('checkPointModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+
+    modalTitle.textContent = 'Record Failure';
+
+    modalBody.innerHTML = `
+        <form id="failCheckForm" onsubmit="submitFailCheck(event, ${checkPointId})">
+            <div class="form-group">
+                <label for="fail_notes">Failure Notes *</label>
+                <textarea id="fail_notes" class="form-control" rows="4" required placeholder="Describe the issue..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="fail_severity">Severity *</label>
+                <select id="fail_severity" class="form-control" required>
+                    <option value="low">Low - Minor issue</option>
+                    <option value="medium" selected>Medium - Requires attention</option>
+                    <option value="high">High - Urgent</option>
+                    <option value="critical">Critical - Immediate action required</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="create_report" checked>
+                    Create a report in the reports register
+                </label>
+            </div>
+            <div id="reportFields" style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: var(--radius);">
+                <div class="form-group">
+                    <label for="report_title">Report Title *</label>
+                    <input type="text" id="report_title" class="form-control" placeholder="Brief description of the issue">
+                </div>
+                <div class="form-group">
+                    <label for="report_description">Report Description</label>
+                    <textarea id="report_description" class="form-control" rows="3" placeholder="Additional details for the report..."></textarea>
+                </div>
+            </div>
+            <div class="form-actions mt-3">
+                <button type="submit" class="btn btn-danger btn-block">Submit Failure</button>
+                <button type="button" class="btn btn-secondary btn-block" onclick="closeModal()">Cancel</button>
+            </div>
+        </form>
+    `;
+
+    // Toggle report fields
+    document.getElementById('create_report').addEventListener('change', function(e) {
+        document.getElementById('reportFields').style.display = e.target.checked ? 'block' : 'none';
+        if (e.target.checked) {
+            document.getElementById('report_title').required = true;
+        } else {
+            document.getElementById('report_title').required = false;
+        }
+    });
+
+    modal.classList.add('active');
+}
+
+function submitFailCheck(e, checkPointId) {
+    e.preventDefault();
+
+    const notes = document.getElementById('fail_notes').value;
+    const severity = document.getElementById('fail_severity').value;
+    const createReport = document.getElementById('create_report').checked;
+    const reportTitle = createReport ? document.getElementById('report_title').value : null;
+    const reportDescription = createReport ? document.getElementById('report_description').value : null;
+
+    fetch('/checks/' + checkPointId + '/perform', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            status: 'fail',
+            notes: notes,
+            severity: severity,
+            create_report: createReport,
+            report_title: reportTitle,
+            report_description: reportDescription,
+            csrf_token: csrfToken
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            closeModal();
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        alert('Error performing check: ' + error.message);
+    });
+}
+
+function performCheck(checkPointId, status) {
+    fetch('/checks/' + checkPointId + '/perform', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status, csrf_token: csrfToken })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            closeModal();
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        alert('Error performing check: ' + error.message);
+    });
 }
 
 function showEditCheckPointModal(point) {
@@ -302,12 +446,16 @@ function showEditCheckPointModal(point) {
     const modalBody = document.getElementById('modalBody');
 
     selectedPoint = point;
+    isEditMode = true;
     modalTitle.textContent = 'Edit: ' + point.reference + ' - ' + point.label;
 
     const currentRadius = point.radius || 10;
     const currentColor = point.custom_colour || '';
 
     modalBody.innerHTML = `
+        <div class="alert alert-info" style="font-size: 0.875rem;">
+            <strong>Edit Mode Active:</strong> You can now drag this checkpoint to reposition it, or adjust its appearance below.
+        </div>
         <div class="form-group">
             <label for="edit_radius">Size (radius in pixels)</label>
             <input type="range" id="edit_radius" min="5" max="30" value="${currentRadius}" class="form-control">
@@ -321,8 +469,8 @@ function showEditCheckPointModal(point) {
             </label>
         </div>
         <div class="form-actions">
-            <button class="btn btn-primary" onclick="saveCheckPointEdit()">Save</button>
-            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveCheckPointEdit()">Save Changes</button>
+            <button class="btn btn-secondary" onclick="exitEditMode()">Done Editing</button>
         </div>
     `;
 
@@ -332,11 +480,17 @@ function showEditCheckPointModal(point) {
         // Live preview
         if (selectedPoint) {
             selectedPoint.radius = parseInt(e.target.value);
-            renderPage(pageNum);
+            renderCheckPoints();
         }
     });
 
     modal.classList.add('active');
+}
+
+function exitEditMode() {
+    isEditMode = false;
+    selectedPoint = null;
+    closeModal();
 }
 
 function showAddCheckPointModal(x, y) {
@@ -431,39 +585,6 @@ function addCheckPointToArea() {
     });
 }
 
-function performCheck(checkPointId, status) {
-    let notes = '';
-    let severity = 'medium';
-
-    if (status === 'fail') {
-        notes = prompt('Enter failure notes:');
-        if (!notes) return;
-
-        const severityChoice = prompt('Severity? (low/medium/high/critical)', 'medium');
-        if (severityChoice) severity = severityChoice;
-    }
-
-    fetch('/checks/' + checkPointId + '/perform', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status, notes, severity, csrf_token: csrfToken })
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            closeModal();
-            location.reload();
-        } else {
-            alert('Error: ' + result.error);
-        }
-    })
-    .catch(error => {
-        alert('Error performing check: ' + error.message);
-    });
-}
-
 function saveCheckPointEdit() {
     if (!selectedPoint) return;
 
@@ -487,8 +608,8 @@ function saveCheckPointEdit() {
         if (result.success) {
             selectedPoint.radius = radius;
             selectedPoint.custom_colour = customColor;
-            closeModal();
-            renderPage(pageNum);
+            alert('✓ Changes saved! You can continue dragging or close this dialog.');
+            renderCheckPoints();
         } else {
             alert('Error: ' + (result.error || 'Unknown error'));
         }
@@ -502,6 +623,7 @@ function closeModal() {
     const modal = document.getElementById('checkPointModal');
     modal.classList.remove('active');
     isAddingCheckPoint = false;
+    isEditMode = false;
     selectedPoint = null;
     const addBtn = document.getElementById('addCheckPoint');
     if (addBtn) {

@@ -17,67 +17,96 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h1>FM Checks</h1>
-            <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+            <div class="logo">
+                <span class="logo-icon">✓</span>
+                <span class="logo-text">FM Checks</span>
+            </div>
         </div>
         <nav class="sidebar-nav">
-            <a href="/dashboard" class="nav-item <?= ($currentPage ?? '') === 'dashboard' ? 'active' : '' ?>">Dashboard</a>
+            <a href="/dashboard" class="nav-item <?= ($currentPage ?? '') === 'dashboard' ? 'active' : '' ?>">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
 
             <?php if (Permission::can('view', 'venues')): ?>
-            <a href="/venues" class="nav-item <?= ($currentPage ?? '') === 'venues' ? 'active' : '' ?>">Venues</a>
+            <a href="/venues" class="nav-item <?= ($currentPage ?? '') === 'venues' ? 'active' : '' ?>">
+                <span class="nav-icon">🏢</span>
+                <span class="nav-label">Venues</span>
+            </a>
             <?php endif; ?>
 
-            <hr class="nav-divider">
-
             <?php if (Permission::can('view', 'areas')): ?>
-            <a href="/areas" class="nav-item <?= ($currentPage ?? '') === 'areas' ? 'active' : '' ?>">Areas</a>
+            <a href="/areas" class="nav-item <?= ($currentPage ?? '') === 'areas' ? 'active' : '' ?>">
+                <span class="nav-icon">📐</span>
+                <span class="nav-label">Areas</span>
+            </a>
             <?php endif; ?>
 
             <?php if (Permission::can('view', 'check_types')): ?>
-            <a href="/check-types" class="nav-item <?= ($currentPage ?? '') === 'check_types' ? 'active' : '' ?>">Check Types</a>
+            <a href="/check-types" class="nav-item <?= ($currentPage ?? '') === 'check_types' ? 'active' : '' ?>">
+                <span class="nav-icon">🏷️</span>
+                <span class="nav-label">Check Types</span>
+            </a>
             <?php endif; ?>
 
-            <hr class="nav-divider">
+            <div class="nav-divider"></div>
 
             <?php if (Permission::can('view', 'checks')): ?>
-            <a href="/checks" class="nav-item <?= ($currentPage ?? '') === 'checks' ? 'active' : '' ?>">Check Logs</a>
+            <a href="/checks" class="nav-item <?= ($currentPage ?? '') === 'checks' ? 'active' : '' ?>">
+                <span class="nav-icon">📝</span>
+                <span class="nav-label">Check Logs</span>
+            </a>
             <?php endif; ?>
 
             <?php if (Permission::can('view', 'reports')): ?>
-            <a href="/reports" class="nav-item <?= ($currentPage ?? '') === 'reports' ? 'active' : '' ?>">Reports</a>
+            <a href="/reports" class="nav-item <?= ($currentPage ?? '') === 'reports' ? 'active' : '' ?>">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Reports</span>
+            </a>
             <?php endif; ?>
 
             <?php if (Permission::can('view', 'users') || Permission::can('view', 'settings')): ?>
-            <hr class="nav-divider">
+            <div class="nav-divider"></div>
             <?php endif; ?>
 
             <?php if (Permission::can('view', 'users')): ?>
-            <a href="/users" class="nav-item <?= ($currentPage ?? '') === 'users' ? 'active' : '' ?>">Users</a>
+            <a href="/users" class="nav-item <?= ($currentPage ?? '') === 'users' ? 'active' : '' ?>">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Users</span>
+            </a>
             <?php endif; ?>
 
             <?php if (Permission::can('view', 'settings')): ?>
-            <a href="/settings" class="nav-item <?= ($currentPage ?? '') === 'settings' ? 'active' : '' ?>">Settings</a>
+            <a href="/settings" class="nav-item <?= ($currentPage ?? '') === 'settings' ? 'active' : '' ?>">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Settings</span>
+            </a>
             <?php endif; ?>
 
-            <hr class="nav-divider">
-            <a href="/help" class="nav-item <?= ($currentPage ?? '') === 'help' ? 'active' : '' ?>">Help</a>
+            <div class="nav-divider"></div>
+            <a href="/help" class="nav-item <?= ($currentPage ?? '') === 'help' ? 'active' : '' ?>">
+                <span class="nav-icon">❓</span>
+                <span class="nav-label">Help</span>
+            </a>
         </nav>
+        <div class="sidebar-footer">
+            <button class="btn-icon" id="darkModeToggle" title="Toggle dark mode">🌓</button>
+            <a href="/logout" class="btn btn-sm btn-danger btn-block">Logout</a>
+        </div>
     </aside>
 
     <!-- Main Content Area -->
     <div class="main-wrapper">
         <!-- Top Bar -->
         <header class="topbar">
-            <button class="sidebar-toggle mobile-only" id="mobileSidebarToggle">☰</button>
+            <button class="sidebar-toggle" id="mobileSidebarToggle">☰</button>
             <div class="topbar-left">
-                <h2 class="page-heading"><?= $pageTitle ?? 'FM Checks' ?></h2>
+                <h1 class="page-heading"><?= $pageTitle ?? 'FM Checks' ?></h1>
             </div>
             <div class="topbar-right">
-                <button class="btn-icon" id="darkModeToggle" title="Toggle dark mode">🌓</button>
-                <div class="user-menu">
+                <div class="user-badge">
                     <span class="user-name"><?= htmlspecialchars(Auth::user()['full_name']) ?></span>
                     <span class="user-role"><?= htmlspecialchars(Auth::role()) ?></span>
-                    <a href="/logout" class="btn btn-sm btn-danger">Logout</a>
                 </div>
             </div>
         </header>

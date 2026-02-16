@@ -204,34 +204,42 @@ class AreaController
         Permission::requirePerm('create', 'checks');
         Csrf::requireValidToken();
 
-        $area = Area::find($id);
-        if (!$area) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Area not found']);
-            exit;
+        try {
+            $area = Area::find($id);
+            if (!$area) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Area not found']);
+                exit;
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($data['reference'], $data['label'], $data['check_type_id'], $data['x_coord'], $data['y_coord'], $data['periodicity'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid checkpoint data']);
+                exit;
+            }
+
+            $checkPointId = CheckPoint::create([
+                'area_id' => $id,
+                'reference' => $data['reference'],
+                'label' => $data['label'],
+                'check_type_id' => $data['check_type_id'],
+                'x_coord' => $data['x_coord'],
+                'y_coord' => $data['y_coord'],
+                'periodicity' => $data['periodicity'],
+                'notes' => $data['notes'] ?? null,
+                'radius' => $data['radius'] ?? 10,
+                'custom_colour' => $data['custom_colour'] ?? null
+            ]);
+
+            $checkPoint = CheckPoint::find($checkPointId);
+            echo json_encode(['success' => true, 'checkpoint' => $checkPoint]);
+        } catch (Exception $e) {
+            error_log('Checkpoint creation error: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error. Please run migration: /migrate.php?secret=fmchecks-migrate-2026']);
         }
-
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['reference'], $data['label'], $data['check_type_id'], $data['x_coord'], $data['y_coord'], $data['periodicity'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid checkpoint data']);
-            exit;
-        }
-
-        $checkPointId = CheckPoint::create([
-            'area_id' => $id,
-            'reference' => $data['reference'],
-            'label' => $data['label'],
-            'check_type_id' => $data['check_type_id'],
-            'x_coord' => $data['x_coord'],
-            'y_coord' => $data['y_coord'],
-            'periodicity' => $data['periodicity'],
-            'notes' => $data['notes'] ?? null
-        ]);
-
-        $checkPoint = CheckPoint::find($checkPointId);
-        echo json_encode(['success' => true, 'checkpoint' => $checkPoint]);
         exit;
     }
 

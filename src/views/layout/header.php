@@ -95,6 +95,9 @@
         </div>
     </aside>
 
+    <!-- Mobile backdrop (closes sidebar when tapped) -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <!-- Main Content Area -->
     <div class="main-wrapper">
         <!-- Top Bar -->

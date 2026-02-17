@@ -1032,20 +1032,33 @@ body {
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
-    :root {
-        --sidebar-width: 0;
-    }
-
+    /* Keep sidebar at its real width so translateX(-100%) actually moves it off-screen */
     .sidebar {
-        transform: translateX(-100%);
+        width: 260px;
+        transform: translateX(-260px); /* explicitly off-screen */
+        z-index: 1100;
+        box-shadow: none;
     }
 
     .sidebar.active {
         transform: translateX(0);
+        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
     }
 
+    /* Backdrop shown behind sidebar when open */
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 1099;
+    }
+    .sidebar-backdrop.active { display: block; }
+
     .topbar .sidebar-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .main-wrapper {

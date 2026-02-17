@@ -2,32 +2,42 @@
 
 // Sidebar Toggle
 document.addEventListener('DOMContentLoaded', function() {
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
-    const sidebar = document.getElementById('sidebar');
+    const toggle   = document.getElementById('mobileSidebarToggle');
+    const sidebar  = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
 
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('active');
+    function openSidebar() {
+        sidebar.classList.add('active');
+        if (backdrop) backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden'; // prevent scroll behind
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('active');
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sidebar.classList.contains('active') ? closeSidebar() : openSidebar();
         });
     }
 
-    if (mobileSidebarToggle) {
-        mobileSidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('active');
-        });
+    // Close on backdrop tap
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
     }
 
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(e) {
-        if (window.innerWidth <= 768) {
-            if (sidebar && sidebar.classList.contains('active') &&
-                !sidebar.contains(e.target) &&
-                e.target !== mobileSidebarToggle) {
-                sidebar.classList.remove('active');
-            }
-        }
-    });
+    // Close when a nav link is tapped on mobile (so user sees the page change)
+    if (sidebar) {
+        sidebar.querySelectorAll('.nav-item').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) closeSidebar();
+            });
+        });
+    }
 });
 
 // Dark Mode Toggle

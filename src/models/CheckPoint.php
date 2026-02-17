@@ -50,8 +50,8 @@ class CheckPoint
     {
         $pdo = Database::connect();
         $stmt = $pdo->prepare('
-            INSERT INTO check_points (area_id, reference, label, check_type_id, x_coord, y_coord, periodicity, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO check_points (area_id, reference, label, check_type_id, x_coord, y_coord, periodicity, notes, radius, custom_colour)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
 
         $stmt->execute([
@@ -62,7 +62,9 @@ class CheckPoint
             $data['x_coord'],
             $data['y_coord'],
             $data['periodicity'] ?? 'monthly',
-            $data['notes'] ?? null
+            $data['notes'] ?? null,
+            $data['radius'] ?? 10,
+            $data['custom_colour'] ?? null
         ]);
 
         return (int) $pdo->lastInsertId();
@@ -73,7 +75,7 @@ class CheckPoint
         $pdo = Database::connect();
         $stmt = $pdo->prepare('
             UPDATE check_points
-            SET reference = ?, label = ?, check_type_id = ?, x_coord = ?, y_coord = ?, periodicity = ?, notes = ?
+            SET reference = ?, label = ?, check_type_id = ?, x_coord = ?, y_coord = ?, periodicity = ?, notes = ?, radius = ?, custom_colour = ?
             WHERE id = ?
         ');
 
@@ -85,6 +87,8 @@ class CheckPoint
             $data['y_coord'],
             $data['periodicity'],
             $data['notes'] ?? null,
+            $data['radius'] ?? 10,
+            $data['custom_colour'] ?? null,
             $id
         ]);
     }

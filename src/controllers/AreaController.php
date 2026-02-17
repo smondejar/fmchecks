@@ -96,6 +96,15 @@ class AreaController
             'uploaded_by' => Auth::id()
         ]);
 
+        // Save crop if provided and not the full page
+        $cropX = (float) ($_POST['crop_x'] ?? 0);
+        $cropY = (float) ($_POST['crop_y'] ?? 0);
+        $cropW = (float) ($_POST['crop_w'] ?? 1);
+        $cropH = (float) ($_POST['crop_h'] ?? 1);
+        if ($cropX > 0 || $cropY > 0 || $cropW < 1 || $cropH < 1) {
+            Area::updateCrop($areaId, ['x' => $cropX, 'y' => $cropY, 'w' => $cropW, 'h' => $cropH]);
+        }
+
         Csrf::regenerate();
         $_SESSION['flash_success'] = 'Area created successfully. Now calibrate the plan.';
         header('Location: /areas/' . $areaId);
@@ -198,10 +207,10 @@ class AreaController
         exit;
     }
 
-    public static function addCheckPoint(int $id): void
+    public static function saveCrop(int $id): void
     {
         Auth::requireAuth();
-        Permission::requirePerm('create', 'checks');
+        Permission::requirePerm('edit', 'areas');
         Csrf::requireValidToken();
 
         $area = Area::find($id);
@@ -213,25 +222,99 @@ class AreaController
 
         $data = json_decode(file_get_contents('php://input'), true);
 
-        if (!isset($data['reference'], $data['label'], $data['check_type_id'], $data['x_coord'], $data['y_coord'], $data['periodicity'])) {
+        if (!isset($data['x'], $data['y'], $data['w'], $data['h'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Invalid checkpoint data']);
+            echo json_encode(['error' => 'Invalid crop data']);
             exit;
         }
 
-        $checkPointId = CheckPoint::create([
-            'area_id' => $id,
-            'reference' => $data['reference'],
-            'label' => $data['label'],
-            'check_type_id' => $data['check_type_id'],
-            'x_coord' => $data['x_coord'],
-            'y_coord' => $data['y_coord'],
-            'periodicity' => $data['periodicity'],
-            'notes' => $data['notes'] ?? null
+        Area::updateCrop($id, [
+            'x' => max(0, min(1, (float) $data['x'])),
+            'y' => max(0, min(1, (float) $data['y'])),
+            'w' => max(0.01, min(1, (float) $data['w'])),
+            'h' => max(0.01, min(1, (float) $data['h']))
         ]);
 
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    public static function addCheckPoint(int $id): void
+    {
+        Auth::requireAuth();
+        Permission::requirePerm('create', 'checks');
+        Csrf::requireValidToken();
+
+        try {
+            $area = Area::find($id);
+            if (!$area) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Area not found']);
+                exit;
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($data['reference'], $data['label'], $data['check_type_id'], $data['x_coord'], $data['y_coord'], $data['periodicity'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid checkpoint data']);
+                exit;
+            }
+
+            $checkPointId = CheckPoint::create([
+                'area_id' => $id,
+                'reference' => $data['reference'],
+                'label' => $data['label'],
+                'check_type_id' => $data['check_type_id'],
+                'x_coord' => $data['x_coord'],
+                'y_coord' => $data['y_coord'],
+                'periodicity' => $data['periodicity'],
+                'notes' => $data['notes'] ?? null,
+                'radius' => $data['radius'] ?? 10,
+                'custom_colour' => $data['custom_colour'] ?? null
+            ]);
+
+            $checkPoint = CheckPoint::find($checkPointId);
+            echo json_encode(['success' => true, 'checkpoint' => $checkPoint]);
+        } catch (Exception $e) {
+            error_log('Checkpoint creation error: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error. Please run migration: /migrate.php?secret=fmchecks-migrate-2026']);
+        }
+        exit;
+    }
+
+    public static function updateCheckPoint(int $areaId, int $checkPointId): void
+    {
+        Auth::requireAuth();
+        Permission::requirePerm('edit', 'checks');
+        Csrf::requireValidToken();
+
         $checkPoint = CheckPoint::find($checkPointId);
-        echo json_encode(['success' => true, 'checkpoint' => $checkPoint]);
+        if (!$checkPoint || $checkPoint['area_id'] != $areaId) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Checkpoint not found']);
+            exit;
+        }
+
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        // Update with existing data, only changing what's provided
+        $updateData = [
+            'reference' => $data['reference'] ?? $checkPoint['reference'],
+            'label' => $data['label'] ?? $checkPoint['label'],
+            'check_type_id' => $data['check_type_id'] ?? $checkPoint['check_type_id'],
+            'x_coord' => $data['x_coord'] ?? $checkPoint['x_coord'],
+            'y_coord' => $data['y_coord'] ?? $checkPoint['y_coord'],
+            'periodicity' => $data['periodicity'] ?? $checkPoint['periodicity'],
+            'notes' => $data['notes'] ?? $checkPoint['notes'],
+            'radius' => $data['radius'] ?? $checkPoint['radius'] ?? 10,
+            'custom_colour' => $data['custom_colour'] ?? $checkPoint['custom_colour']
+        ];
+
+        CheckPoint::update($checkPointId, $updateData);
+
+        echo json_encode(['success' => true]);
         exit;
     }
 }

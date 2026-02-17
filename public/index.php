@@ -1,49 +1,276 @@
 <?php
-// ULTRA VERBOSE TEST
+
+// Start session
+session_start();
+
+// Load configuration and classes
+require __DIR__ . '/../config/database.php';
+require __DIR__ . '/../src/middleware/Auth.php';
+require __DIR__ . '/../src/middleware/Csrf.php';
+require __DIR__ . '/../src/models/User.php';
+require __DIR__ . '/../src/models/Permission.php';
+require __DIR__ . '/../src/models/Setting.php';
+require __DIR__ . '/../src/models/Venue.php';
+require __DIR__ . '/../src/models/Area.php';
+require __DIR__ . '/../src/models/CheckType.php';
+require __DIR__ . '/../src/models/CheckPoint.php';
+require __DIR__ . '/../src/models/CheckLog.php';
+require __DIR__ . '/../src/models/Report.php';
+require __DIR__ . '/../src/controllers/AuthController.php';
+require __DIR__ . '/../src/controllers/VenueController.php';
+require __DIR__ . '/../src/controllers/AreaController.php';
+require __DIR__ . '/../src/controllers/CheckTypeController.php';
+require __DIR__ . '/../src/controllers/CheckController.php';
+require __DIR__ . '/../src/controllers/ReportController.php';
+require __DIR__ . '/../src/controllers/UserController.php';
+require __DIR__ . '/../src/controllers/SettingsController.php';
+
+// Error handling
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', '/tmp/php-errors.log');
+ini_set('display_errors', 0);
 
-// Log to file
-file_put_contents('/tmp/fmchecks-debug.log', date('Y-m-d H:i:s') . " - Request: " . ($_SERVER['REQUEST_URI'] ?? 'NO URI') . "\n", FILE_APPEND);
+set_exception_handler(function ($exception) {
+    error_log($exception->getMessage());
+    http_response_code(500);
+    $errorCode = 500;
+    $errorTitle = 'Server Error';
+    $errorMessage = 'An unexpected error occurred. Please try again later.';
+    require __DIR__ . '/../src/views/error.php';
+    exit;
+});
 
-echo "<!DOCTYPE html><html><head><title>Debug</title></head><body>";
-echo "<h1>Index.php Ultra Verbose Test</h1>";
-echo "<p>✓ Line 10: PHP is executing!</p>";
-
-$requestUri = $_SERVER['REQUEST_URI'] ?? '';
-echo "<p>✓ Line 13: Got REQUEST_URI: " . htmlspecialchars($requestUri) . "</p>";
-
+// Parse request
+$requestUri = $_SERVER['REQUEST_URI'];
 $path = parse_url($requestUri, PHP_URL_PATH);
-echo "<p>✓ Line 16: Parsed path: " . htmlspecialchars($path ?? 'NULL') . "</p>";
+$method = $_SERVER['REQUEST_METHOD'];
 
-echo "<p>✓ Line 18: About to test path matching...</p>";
+// Router
+try {
+    // Dashboard route
+    if ($path === '/' || $path === '/dashboard') {
+        Auth::requireAuth();
+        require __DIR__ . '/../src/views/dashboard.php';
+        exit;
+    }
 
-if ($path === '/') {
-    echo "<h2>✓ Matched root /</h2>";
-} elseif ($path === '/venues') {
-    echo "<h2>✓ MATCHED /venues!</h2>";
-    echo "<p>If you see this, routing works perfectly!</p>";
-} elseif ($path === '/dashboard') {
-    echo "<h2>✓ MATCHED /dashboard!</h2>";
-    echo "<p>If you see this, routing works perfectly!</p>";
-} else {
-    echo "<h2>Path: " . htmlspecialchars($path) . "</h2>";
-    echo "<p>No specific match</p>";
+    // Auth routes
+    switch ($path) {
+        case '/login':
+            if ($method === 'GET') {
+                AuthController::showLogin();
+            } else {
+                AuthController::login();
+            }
+            exit;
+
+        case '/register':
+            if ($method === 'GET') {
+                AuthController::showRegister();
+            } else {
+                AuthController::register();
+            }
+            exit;
+
+        case '/logout':
+            AuthController::logout();
+            exit;
+
+        case '/help':
+            Auth::requireAuth();
+            require __DIR__ . '/../src/views/help.php';
+            exit;
+    }
+
+    // Venue routes
+    if (preg_match('#^/venues$#', $path)) {
+        VenueController::index();
+        exit;
+    }
+    if (preg_match('#^/venues/(\d+)$#', $path, $matches)) {
+        VenueController::show((int) $matches[1]);
+        exit;
+    }
+    if ($path === '/venues/create' && $method === 'GET') {
+        VenueController::create();
+        exit;
+    }
+    if ($path === '/venues/store' && $method === 'POST') {
+        VenueController::store();
+        exit;
+    }
+    if (preg_match('#^/venues/(\d+)/edit$#', $path, $matches) && $method === 'GET') {
+        VenueController::edit((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/venues/(\d+)/update$#', $path, $matches) && $method === 'POST') {
+        VenueController::update((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/venues/(\d+)/delete$#', $path, $matches) && $method === 'POST') {
+        VenueController::delete((int) $matches[1]);
+        exit;
+    }
+
+    // Area routes
+    if (preg_match('#^/areas$#', $path)) {
+        AreaController::index();
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)$#', $path, $matches)) {
+        AreaController::show((int) $matches[1]);
+        exit;
+    }
+    if ($path === '/areas/create' && $method === 'GET') {
+        AreaController::create();
+        exit;
+    }
+    if ($path === '/areas/store' && $method === 'POST') {
+        AreaController::store();
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)/edit$#', $path, $matches) && $method === 'GET') {
+        AreaController::edit((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)/update$#', $path, $matches) && $method === 'POST') {
+        AreaController::update((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)/delete$#', $path, $matches) && $method === 'POST') {
+        AreaController::delete((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)/calibrate$#', $path, $matches) && $method === 'POST') {
+        AreaController::calibrate((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)/crop$#', $path, $matches) && $method === 'POST') {
+        AreaController::saveCrop((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)/add-checkpoint$#', $path, $matches) && $method === 'POST') {
+        AreaController::addCheckPoint((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/areas/(\d+)/checkpoints/(\d+)$#', $path, $matches) && $method === 'POST') {
+        AreaController::updateCheckPoint((int) $matches[1], (int) $matches[2]);
+        exit;
+    }
+
+    // Check Type routes
+    if (preg_match('#^/check-types$#', $path)) {
+        CheckTypeController::index();
+        exit;
+    }
+    if ($path === '/check-types/create' && $method === 'GET') {
+        CheckTypeController::create();
+        exit;
+    }
+    if ($path === '/check-types/store' && $method === 'POST') {
+        CheckTypeController::store();
+        exit;
+    }
+    if (preg_match('#^/check-types/(\d+)/edit$#', $path, $matches) && $method === 'GET') {
+        CheckTypeController::edit((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/check-types/(\d+)/update$#', $path, $matches) && $method === 'POST') {
+        CheckTypeController::update((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/check-types/(\d+)/delete$#', $path, $matches) && $method === 'POST') {
+        CheckTypeController::delete((int) $matches[1]);
+        exit;
+    }
+
+    // Check routes
+    if (preg_match('#^/checks$#', $path)) {
+        CheckController::index();
+        exit;
+    }
+    if (preg_match('#^/checks/(\d+)/perform$#', $path, $matches) && $method === 'POST') {
+        CheckController::perform((int) $matches[1]);
+        exit;
+    }
+
+    // Report routes
+    if (preg_match('#^/reports$#', $path)) {
+        ReportController::index();
+        exit;
+    }
+    if (preg_match('#^/reports/(\d+)$#', $path, $matches)) {
+        ReportController::show((int) $matches[1]);
+        exit;
+    }
+    if ($path === '/reports/create' && $method === 'GET') {
+        ReportController::create();
+        exit;
+    }
+    if ($path === '/reports/store' && $method === 'POST') {
+        ReportController::store();
+        exit;
+    }
+    if (preg_match('#^/reports/(\d+)/update$#', $path, $matches) && $method === 'POST') {
+        ReportController::update((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/reports/(\d+)/resolve$#', $path, $matches) && $method === 'POST') {
+        ReportController::resolve((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/reports/(\d+)/delete$#', $path, $matches) && $method === 'POST') {
+        ReportController::delete((int) $matches[1]);
+        exit;
+    }
+
+    // User routes
+    if (preg_match('#^/users$#', $path)) {
+        UserController::index();
+        exit;
+    }
+    if ($path === '/users/create' && $method === 'GET') {
+        UserController::create();
+        exit;
+    }
+    if ($path === '/users/store' && $method === 'POST') {
+        UserController::store();
+        exit;
+    }
+    if (preg_match('#^/users/(\d+)/edit$#', $path, $matches) && $method === 'GET') {
+        UserController::edit((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/users/(\d+)/update$#', $path, $matches) && $method === 'POST') {
+        UserController::update((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/users/(\d+)/delete$#', $path, $matches) && $method === 'POST') {
+        UserController::delete((int) $matches[1]);
+        exit;
+    }
+
+    // Settings routes
+    if ($path === '/settings') {
+        SettingsController::index();
+        exit;
+    }
+    if ($path === '/settings/update' && $method === 'POST') {
+        SettingsController::update();
+        exit;
+    }
+
+    // 404 Not Found
+    http_response_code(404);
+    $errorCode = 404;
+    $errorTitle = 'Page Not Found';
+    $errorMessage = 'The page you are looking for does not exist.';
+    require __DIR__ . '/../src/views/error.php';
+
+} catch (Exception $e) {
+    error_log($e->getMessage());
+    http_response_code(500);
+    $errorCode = 500;
+    $errorTitle = 'Server Error';
+    $errorMessage = 'An unexpected error occurred. Please try again later.';
+    require __DIR__ . '/../src/views/error.php';
 }
-
-echo "<p>✓ Line 33: Finished path matching</p>";
-
-echo "<hr>";
-echo "<h3>Test Links:</h3>";
-echo "<p><a href='/'>Test / (root)</a></p>";
-echo "<p><a href='/venues'>Test /venues</a></p>";
-echo "<p><a href='/dashboard'>Test /dashboard</a></p>";
-echo "<p><a href='/phpinfo.php'>View phpinfo()</a></p>";
-
-echo "<p>✓ Line 43: Reached end of script</p>";
-echo "</body></html>";
-
-file_put_contents('/tmp/fmchecks-debug.log', date('Y-m-d H:i:s') . " - Completed successfully\n", FILE_APPEND);
-?>

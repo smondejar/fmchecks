@@ -42,20 +42,10 @@ function loadPDF(url) {
 }
 
 function renderPage(num) {
-    pdfDoc.getPage(num).then(function(page) {
-        const viewport = page.getViewport({ scale: scale });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        const renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-
-        page.render(renderContext).promise.then(function() {
-            pdfRendered = true;
-            renderCheckPoints();
-        });
+    pageNum = num;
+    renderPdfOnly(function() {
+        pdfRendered = true;
+        renderCheckPoints();
     });
 }
 
@@ -180,24 +170,42 @@ function setupControls() {
     });
 }
 
+// Render just the PDF onto the canvas (no checkpoints), then call onDone if provided
+function renderPdfOnly(onDone) {
+    pdfDoc.getPage(pageNum).then(function(page) {
+        const viewport = page.getViewport({ scale: scale });
+        const hasCrop  = area.crop_w && area.crop_w < 0.9999;
+
+        if (hasCrop) {
+            const offscreen = document.createElement('canvas');
+            offscreen.width  = viewport.width;
+            offscreen.height = viewport.height;
+            page.render({ canvasContext: offscreen.getContext('2d'), viewport }).promise.then(function() {
+                const cx = Math.round((area.crop_x || 0) * offscreen.width);
+                const cy = Math.round((area.crop_y || 0) * offscreen.height);
+                const cw = Math.round((area.crop_w || 1) * offscreen.width);
+                const ch = Math.round((area.crop_h || 1) * offscreen.height);
+                canvas.width = cw; canvas.height = ch;
+                ctx.drawImage(offscreen, cx, cy, cw, ch, 0, 0, cw, ch);
+                if (onDone) onDone();
+            });
+        } else {
+            canvas.width  = viewport.width;
+            canvas.height = viewport.height;
+            page.render({ canvasContext: ctx, viewport }).promise.then(function() {
+                if (onDone) onDone();
+            });
+        }
+    });
+}
+
 function renderCheckPoints() {
     if (!checkPoints || checkPoints.length === 0 || !pdfRendered) return;
 
-    // Clear previous checkpoints (redraw PDF section if needed)
     if (isDragging) {
-        // During drag, re-render the page to clear old positions
-        pdfDoc.getPage(pageNum).then(function(page) {
-            const viewport = page.getViewport({ scale: scale });
-            const renderContext = {
-                canvasContext: ctx,
-                viewport: viewport
-            };
-            page.render(renderContext).promise.then(function() {
-                // Now draw all checkpoints
-                checkPoints.forEach(function(point) {
-                    drawCheckPoint(point);
-                });
-            });
+        // During drag: clear the canvas (redraw PDF only) then draw points on top
+        renderPdfOnly(function() {
+            checkPoints.forEach(function(point) { drawCheckPoint(point); });
         });
     } else {
         checkPoints.forEach(function(point) {

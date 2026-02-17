@@ -83,6 +83,21 @@ class Area
         return $stmt->execute($values);
     }
 
+    public static function updateCrop(int $id, array $crop): bool
+    {
+        $pdo = Database::connect();
+        $stmt = $pdo->prepare('
+            UPDATE areas SET crop_x = ?, crop_y = ?, crop_w = ?, crop_h = ? WHERE id = ?
+        ');
+        return $stmt->execute([
+            $crop['x'],
+            $crop['y'],
+            $crop['w'],
+            $crop['h'],
+            $id
+        ]);
+    }
+
     public static function updateCalibration(int $id, array $calibration): bool
     {
         $pdo = Database::connect();

@@ -144,6 +144,10 @@ try {
         AreaController::calibrate((int) $matches[1]);
         exit;
     }
+    if (preg_match('#^/areas/(\d+)/crop$#', $path, $matches) && $method === 'POST') {
+        AreaController::saveCrop((int) $matches[1]);
+        exit;
+    }
     if (preg_match('#^/areas/(\d+)/add-checkpoint$#', $path, $matches) && $method === 'POST') {
         AreaController::addCheckPoint((int) $matches[1]);
         exit;

@@ -96,6 +96,15 @@ class AreaController
             'uploaded_by' => Auth::id()
         ]);
 
+        // Save crop if provided and not the full page
+        $cropX = (float) ($_POST['crop_x'] ?? 0);
+        $cropY = (float) ($_POST['crop_y'] ?? 0);
+        $cropW = (float) ($_POST['crop_w'] ?? 1);
+        $cropH = (float) ($_POST['crop_h'] ?? 1);
+        if ($cropX > 0 || $cropY > 0 || $cropW < 1 || $cropH < 1) {
+            Area::updateCrop($areaId, ['x' => $cropX, 'y' => $cropY, 'w' => $cropW, 'h' => $cropH]);
+        }
+
         Csrf::regenerate();
         $_SESSION['flash_success'] = 'Area created successfully. Now calibrate the plan.';
         header('Location: /areas/' . $areaId);
@@ -192,6 +201,38 @@ class AreaController
             'x2' => $data['x2'],
             'y2' => $data['y2'],
             'distance_m' => $data['distance_m']
+        ]);
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    public static function saveCrop(int $id): void
+    {
+        Auth::requireAuth();
+        Permission::requirePerm('edit', 'areas');
+        Csrf::requireValidToken();
+
+        $area = Area::find($id);
+        if (!$area) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Area not found']);
+            exit;
+        }
+
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($data['x'], $data['y'], $data['w'], $data['h'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid crop data']);
+            exit;
+        }
+
+        Area::updateCrop($id, [
+            'x' => max(0, min(1, (float) $data['x'])),
+            'y' => max(0, min(1, (float) $data['y'])),
+            'w' => max(0.01, min(1, (float) $data['w'])),
+            'h' => max(0.01, min(1, (float) $data['h']))
         ]);
 
         echo json_encode(['success' => true]);

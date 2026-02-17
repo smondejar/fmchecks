@@ -215,13 +215,6 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
 
     <!-- Quick Actions -->
     <div class="quick-actions-grid mt-4">
-        <?php if (Permission::can('create', 'checks')): ?>
-        <a href="/checks" class="action-card action-primary">
-            <div class="action-icon">✓</div>
-            <div class="action-label">Perform Checks</div>
-        </a>
-        <?php endif; ?>
-
         <?php if (Permission::can('create', 'reports')): ?>
         <a href="/reports/create" class="action-card action-warning">
             <div class="action-icon">📝</div>

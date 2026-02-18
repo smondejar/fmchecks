@@ -160,10 +160,13 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
             </h3>
         </div>
         <div class="venue-grid">
-            <?php foreach ($venues as $venue):
+            <?php
+            $venueColors = ['vc-blue','vc-violet','vc-emerald','vc-sky','vc-amber','vc-rose'];
+            foreach ($venues as $vi => $venue):
                 $venueAreas = array_filter($areas, fn($a) => $a['venue_id'] == $venue['id']);
+                $vc = $venueColors[$vi % count($venueColors)];
             ?>
-            <div class="venue-card">
+            <div class="venue-card <?= $vc ?>">
                 <h4><a href="/venues/<?= $venue['id'] ?>"><?= htmlspecialchars($venue['name']) ?></a></h4>
                 <?php if (!empty($venueAreas)): ?>
                 <div class="area-links">
@@ -362,6 +365,65 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     color: var(--primary);
 }
 
+/* ── Venue card colour palette ───────────────────── */
+/* Each variant: subtle bg tint + left border accent + matching link hover */
+.venue-card.vc-blue    { background: #eff6ff; border-color: #bfdbfe; border-left: 3px solid #3b82f6; }
+.venue-card.vc-violet  { background: #f5f3ff; border-color: #ddd6fe; border-left: 3px solid #8b5cf6; }
+.venue-card.vc-emerald { background: #ecfdf5; border-color: #a7f3d0; border-left: 3px solid #10b981; }
+.venue-card.vc-sky     { background: #f0f9ff; border-color: #bae6fd; border-left: 3px solid #0ea5e9; }
+.venue-card.vc-amber   { background: #fffbeb; border-color: #fde68a; border-left: 3px solid #f59e0b; }
+.venue-card.vc-rose    { background: #fff1f2; border-color: #fecdd3; border-left: 3px solid #f43f5e; }
+
+.venue-card.vc-blue    h4 a { color: #1d4ed8; }
+.venue-card.vc-violet  h4 a { color: #6d28d9; }
+.venue-card.vc-emerald h4 a { color: #047857; }
+.venue-card.vc-sky     h4 a { color: #0284c7; }
+.venue-card.vc-amber   h4 a { color: #b45309; }
+.venue-card.vc-rose    h4 a { color: #be123c; }
+
+.venue-card.vc-blue    .area-link { background: #dbeafe; color: #1e40af; }
+.venue-card.vc-violet  .area-link { background: #ede9fe; color: #5b21b6; }
+.venue-card.vc-emerald .area-link { background: #d1fae5; color: #065f46; }
+.venue-card.vc-sky     .area-link { background: #e0f2fe; color: #0369a1; }
+.venue-card.vc-amber   .area-link { background: #fef3c7; color: #92400e; }
+.venue-card.vc-rose    .area-link { background: #ffe4e6; color: #9f1239; }
+
+.venue-card.vc-blue    .area-link:hover { background: #bfdbfe; }
+.venue-card.vc-violet  .area-link:hover { background: #ddd6fe; }
+.venue-card.vc-emerald .area-link:hover { background: #a7f3d0; }
+.venue-card.vc-sky     .area-link:hover { background: #bae6fd; }
+.venue-card.vc-amber   .area-link:hover { background: #fde68a; }
+.venue-card.vc-rose    .area-link:hover { background: #fecdd3; }
+
+/* Dark mode variants */
+.dark-mode .venue-card.vc-blue    { background: rgba(59,130,246,0.1);  border-color: rgba(59,130,246,0.3);  border-left-color: #3b82f6; }
+.dark-mode .venue-card.vc-violet  { background: rgba(139,92,246,0.1);  border-color: rgba(139,92,246,0.3);  border-left-color: #8b5cf6; }
+.dark-mode .venue-card.vc-emerald { background: rgba(16,185,129,0.1);  border-color: rgba(16,185,129,0.3);  border-left-color: #10b981; }
+.dark-mode .venue-card.vc-sky     { background: rgba(14,165,233,0.1);  border-color: rgba(14,165,233,0.3);  border-left-color: #0ea5e9; }
+.dark-mode .venue-card.vc-amber   { background: rgba(245,158,11,0.1);  border-color: rgba(245,158,11,0.3);  border-left-color: #f59e0b; }
+.dark-mode .venue-card.vc-rose    { background: rgba(244,63,94,0.1);   border-color: rgba(244,63,94,0.3);   border-left-color: #f43f5e; }
+
+.dark-mode .venue-card.vc-blue    h4 a { color: #93c5fd; }
+.dark-mode .venue-card.vc-violet  h4 a { color: #c4b5fd; }
+.dark-mode .venue-card.vc-emerald h4 a { color: #6ee7b7; }
+.dark-mode .venue-card.vc-sky     h4 a { color: #7dd3fc; }
+.dark-mode .venue-card.vc-amber   h4 a { color: #fcd34d; }
+.dark-mode .venue-card.vc-rose    h4 a { color: #fda4af; }
+
+.dark-mode .venue-card.vc-blue    .area-link { background: rgba(59,130,246,0.15);  color: #93c5fd; }
+.dark-mode .venue-card.vc-violet  .area-link { background: rgba(139,92,246,0.15);  color: #c4b5fd; }
+.dark-mode .venue-card.vc-emerald .area-link { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+.dark-mode .venue-card.vc-sky     .area-link { background: rgba(14,165,233,0.15);  color: #7dd3fc; }
+.dark-mode .venue-card.vc-amber   .area-link { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+.dark-mode .venue-card.vc-rose    .area-link { background: rgba(244,63,94,0.15);   color: #fda4af; }
+
+.dark-mode .venue-card.vc-blue    .area-link:hover { background: rgba(59,130,246,0.28); }
+.dark-mode .venue-card.vc-violet  .area-link:hover { background: rgba(139,92,246,0.28); }
+.dark-mode .venue-card.vc-emerald .area-link:hover { background: rgba(16,185,129,0.28); }
+.dark-mode .venue-card.vc-sky     .area-link:hover { background: rgba(14,165,233,0.28); }
+.dark-mode .venue-card.vc-amber   .area-link:hover { background: rgba(245,158,11,0.28); }
+.dark-mode .venue-card.vc-rose    .area-link:hover { background: rgba(244,63,94,0.28); }
+
 /* ── Recent reports list ─────────────────────────── */
 .report-list {
     padding: 0.75rem 1rem;
@@ -461,6 +523,7 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
 .dark-mode .overdue-item a,
 .dark-mode .due-item a         { color: #e2e8f0; }
 
+/* Base dark venue card — coloured variants override this below */
 .dark-mode .venue-card         { background: #0f172a; border-color: #334155; }
 .dark-mode .venue-card h4 a    { color: #e2e8f0; }
 

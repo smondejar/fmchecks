@@ -79,6 +79,15 @@
             </a>
             <?php endif; ?>
 
+            <?php if (Permission::can('view', 'reports')): ?>
+            <a href="/analytics" class="nav-item <?= ($currentPage ?? '') === 'analytics' ? 'active' : '' ?>">
+                <span class="nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H3"/><path d="M3 3v18"/><rect x="7" y="10" width="3" height="11" rx="1"/><rect x="13" y="5" width="3" height="16" rx="1"/><rect x="19" y="13" width="3" height="8" rx="1" transform="translate(-1 0)"/></svg>
+                </span>
+                <span class="nav-label">Analytics</span>
+            </a>
+            <?php endif; ?>
+
             <?php if (Permission::can('view', 'users') || Permission::can('view', 'settings')): ?>
             <div class="nav-divider"></div>
             <?php endif; ?>

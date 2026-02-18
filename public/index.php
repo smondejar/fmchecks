@@ -24,6 +24,7 @@ require __DIR__ . '/../src/controllers/CheckController.php';
 require __DIR__ . '/../src/controllers/ReportController.php';
 require __DIR__ . '/../src/controllers/UserController.php';
 require __DIR__ . '/../src/controllers/SettingsController.php';
+require __DIR__ . '/../src/controllers/AnalyticsController.php';
 
 // Error handling
 error_reporting(E_ALL);
@@ -188,8 +189,18 @@ try {
         CheckController::index();
         exit;
     }
+    if ($path === '/checks/export') {
+        CheckController::export();
+        exit;
+    }
     if (preg_match('#^/checks/(\d+)/perform$#', $path, $matches) && $method === 'POST') {
         CheckController::perform((int) $matches[1]);
+        exit;
+    }
+
+    // Analytics route
+    if ($path === '/analytics') {
+        AnalyticsController::index();
         exit;
     }
 

@@ -16,6 +16,7 @@ require __DIR__ . '/../src/models/CheckType.php';
 require __DIR__ . '/../src/models/CheckPoint.php';
 require __DIR__ . '/../src/models/CheckLog.php';
 require __DIR__ . '/../src/models/Report.php';
+require __DIR__ . '/../src/models/VenuePlan.php';
 require __DIR__ . '/../src/controllers/AuthController.php';
 require __DIR__ . '/../src/controllers/VenueController.php';
 require __DIR__ . '/../src/controllers/AreaController.php';
@@ -25,6 +26,7 @@ require __DIR__ . '/../src/controllers/ReportController.php';
 require __DIR__ . '/../src/controllers/UserController.php';
 require __DIR__ . '/../src/controllers/SettingsController.php';
 require __DIR__ . '/../src/controllers/AnalyticsController.php';
+require __DIR__ . '/../src/controllers/VenuePlanController.php';
 
 // Error handling
 error_reporting(E_ALL);
@@ -109,6 +111,14 @@ try {
     }
     if (preg_match('#^/venues/(\d+)/delete$#', $path, $matches) && $method === 'POST') {
         VenueController::delete((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/venues/(\d+)/plans/store$#', $path, $matches) && $method === 'POST') {
+        VenuePlanController::upload((int) $matches[1]);
+        exit;
+    }
+    if (preg_match('#^/venues/(\d+)/plans/(\d+)/delete$#', $path, $matches) && $method === 'POST') {
+        VenuePlanController::delete((int) $matches[1], (int) $matches[2]);
         exit;
     }
 

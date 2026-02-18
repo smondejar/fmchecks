@@ -39,49 +39,94 @@ require __DIR__ . '/../layout/header.php';
             </div>
 
             <?php if (!$isEdit): ?>
+            <?php
+            $allPlansJson       = json_encode($allVenuePlans ?? []);
+            $preselectedPlanId  = (int)($_GET['plan_id'] ?? 0);
+            $preselectedPlan    = null;
+            if ($preselectedPlanId && !empty($allVenuePlans)) {
+                foreach ($allVenuePlans as $plans) {
+                    foreach ($plans as $p) {
+                        if ($p['id'] === $preselectedPlanId) { $preselectedPlan = $p; break 2; }
+                    }
+                }
+            }
+            $useLibrary = (bool)$preselectedPlan;
+            ?>
+
+            <!-- Floor plan source tabs -->
             <div class="form-group">
-                <label for="pdf_file">PDF Floor Plan <span class="text-danger">*</span></label>
-                <input type="file" id="pdf_file" name="pdf_file" class="form-control" accept=".pdf" required>
-                <small class="form-text">Upload a PDF floor plan or CAD drawing. You can crop it to focus on the relevant area.</small>
+                <label>Floor Plan Source</label>
+                <div class="plan-source-tabs">
+                    <button type="button" class="plan-source-tab <?= $useLibrary ? '' : 'active' ?>" data-source="upload">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Upload new PDF
+                    </button>
+                    <button type="button" class="plan-source-tab <?= $useLibrary ? 'active' : '' ?>" data-source="library">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Use from library
+                    </button>
+                </div>
             </div>
 
-            <!-- PDF Crop UI (shown after file is selected) -->
-            <div id="cropSection" style="display:none;" class="crop-section">
+            <!-- Source: upload new PDF -->
+            <div id="sourceUpload" <?= $useLibrary ? 'style="display:none"' : '' ?>>
                 <div class="form-group">
-                    <label>Crop Plan (optional)</label>
-                    <p class="form-text">Drag the handles to select the area of the PDF you want to show. Leave as-is to use the full page.</p>
+                    <label for="pdf_file">PDF Floor Plan <span class="text-danger">*</span></label>
+                    <input type="file" id="pdf_file" name="pdf_file" class="form-control" accept=".pdf">
+                    <small class="form-text">Upload a PDF floor plan or CAD drawing. You can crop it to focus on the relevant area.</small>
                 </div>
-
-                <div class="crop-wrapper">
-                    <div class="crop-toolbar">
-                        <span id="cropDimensions" class="crop-dimensions"></span>
-                        <button type="button" class="btn btn-sm btn-secondary" id="resetCrop">Reset to Full Page</button>
+                <div id="cropSection" style="display:none;" class="crop-section">
+                    <div class="form-group">
+                        <label>Crop Plan (optional)</label>
+                        <p class="form-text">Drag the handles to select the area of the PDF you want to show. Leave as-is to use the full page.</p>
                     </div>
-                    <div class="crop-canvas-container" id="cropCanvasContainer">
-                        <canvas id="cropCanvas"></canvas>
-                        <!-- Crop overlay -->
-                        <div class="crop-overlay" id="cropOverlay">
-                            <div class="crop-box" id="cropBox">
-                                <div class="crop-handle crop-handle-nw" data-handle="nw"></div>
-                                <div class="crop-handle crop-handle-ne" data-handle="ne"></div>
-                                <div class="crop-handle crop-handle-sw" data-handle="sw"></div>
-                                <div class="crop-handle crop-handle-se" data-handle="se"></div>
-                                <div class="crop-handle crop-handle-n"  data-handle="n"></div>
-                                <div class="crop-handle crop-handle-s"  data-handle="s"></div>
-                                <div class="crop-handle crop-handle-w"  data-handle="w"></div>
-                                <div class="crop-handle crop-handle-e"  data-handle="e"></div>
-                                <div class="crop-move-zone" data-handle="move"></div>
+                    <div class="crop-wrapper">
+                        <div class="crop-toolbar">
+                            <span id="cropDimensions" class="crop-dimensions"></span>
+                            <button type="button" class="btn btn-sm btn-secondary" id="resetCrop">Reset to Full Page</button>
+                        </div>
+                        <div class="crop-canvas-container" id="cropCanvasContainer">
+                            <canvas id="cropCanvas"></canvas>
+                            <div class="crop-overlay" id="cropOverlay">
+                                <div class="crop-box" id="cropBox">
+                                    <div class="crop-handle crop-handle-nw" data-handle="nw"></div>
+                                    <div class="crop-handle crop-handle-ne" data-handle="ne"></div>
+                                    <div class="crop-handle crop-handle-sw" data-handle="sw"></div>
+                                    <div class="crop-handle crop-handle-se" data-handle="se"></div>
+                                    <div class="crop-handle crop-handle-n"  data-handle="n"></div>
+                                    <div class="crop-handle crop-handle-s"  data-handle="s"></div>
+                                    <div class="crop-handle crop-handle-w"  data-handle="w"></div>
+                                    <div class="crop-handle crop-handle-e"  data-handle="e"></div>
+                                    <div class="crop-move-zone" data-handle="move"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <input type="hidden" name="crop_x" id="crop_x" value="0">
+                    <input type="hidden" name="crop_y" id="crop_y" value="0">
+                    <input type="hidden" name="crop_w" id="crop_w" value="1">
+                    <input type="hidden" name="crop_h" id="crop_h" value="1">
                 </div>
-
-                <!-- Hidden crop coordinate inputs -->
-                <input type="hidden" name="crop_x" id="crop_x" value="0">
-                <input type="hidden" name="crop_y" id="crop_y" value="0">
-                <input type="hidden" name="crop_w" id="crop_w" value="1">
-                <input type="hidden" name="crop_h" id="crop_h" value="1">
             </div>
+
+            <!-- Source: use from plan library -->
+            <div id="sourceLibrary" <?= $useLibrary ? '' : 'style="display:none"' ?>>
+                <input type="hidden" name="plan_id" id="plan_id_input" value="<?= $useLibrary ? $preselectedPlan['id'] : '' ?>">
+                <div id="libraryPlans" class="library-plan-picker"></div>
+                <p id="libraryEmpty" class="form-text" style="display:none;">
+                    No plans in this venue's library yet.
+                    <a href="#" id="switchToUpload">Upload a new PDF instead.</a>
+                </p>
+                <p id="libraryNoVenue" class="form-text" <?= $useLibrary ? 'style="display:none"' : '' ?>>
+                    Select a venue above to see its stored plans.
+                </p>
+            </div>
+
+            <script>
+            // All venue plans passed from controller
+            var allVenuePlans = <?= $allPlansJson ?>;
+            var preselectedPlanId = <?= $preselectedPlanId ?>;
+            </script>
             <?php endif; ?>
 
             <div class="form-actions">
@@ -204,6 +249,59 @@ require __DIR__ . '/../layout/header.php';
 </style>
 
 <?php if (!$isEdit): ?>
+<style>
+.plan-source-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+.plan-source-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    background: var(--gray-50);
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.plan-source-tab.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 500;
+}
+.library-plan-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.library-plan-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.15s, background 0.15s;
+}
+.library-plan-option:hover { border-color: var(--primary); background: var(--primary-light); }
+.library-plan-option.selected { border-color: var(--primary); background: var(--primary-light); }
+.library-plan-option input[type=radio] { accent-color: var(--primary); }
+.library-plan-option-name { font-weight: 500; font-size: 0.9375rem; }
+.library-plan-option-preview { margin-left: auto; }
+.dark-mode .plan-source-tab { background: #1e293b; border-color: #334155; color: #94a3b8; }
+.dark-mode .plan-source-tab.active { background: rgba(37,99,235,0.15); border-color: #3b82f6; color: #93c5fd; }
+.dark-mode .library-plan-option { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+.dark-mode .library-plan-option.selected,
+.dark-mode .library-plan-option:hover { border-color: #3b82f6; background: rgba(37,99,235,0.12); }
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput  = document.getElementById('pdf_file');
@@ -362,6 +460,90 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', function() {
         if (pdfPage) updateCropBox();
     });
+
+    // -------- Plan source tabs & library picker --------
+    var venueSelect  = document.getElementById('venue_id');
+    var srcUpload    = document.getElementById('sourceUpload');
+    var srcLibrary   = document.getElementById('sourceLibrary');
+    var planIdInput  = document.getElementById('plan_id_input');
+    var libraryPlans = document.getElementById('libraryPlans');
+    var libraryEmpty = document.getElementById('libraryEmpty');
+    var libraryNoVenue = document.getElementById('libraryNoVenue');
+    var fileInput    = document.getElementById('pdf_file');
+    var tabs         = document.querySelectorAll('.plan-source-tab');
+    var activeSource = srcLibrary && srcLibrary.style.display !== 'none' ? 'library' : 'upload';
+
+    function switchSource(src) {
+        activeSource = src;
+        tabs.forEach(function(t) { t.classList.toggle('active', t.dataset.source === src); });
+        if (srcUpload) srcUpload.style.display  = src === 'upload'  ? '' : 'none';
+        if (srcLibrary) srcLibrary.style.display = src === 'library' ? '' : 'none';
+        if (fileInput) fileInput.required = src === 'upload';
+        if (src === 'library') refreshLibraryPlans();
+    }
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() { switchSource(tab.dataset.source); });
+    });
+
+    var switchToUploadLink = document.getElementById('switchToUpload');
+    if (switchToUploadLink) {
+        switchToUploadLink.addEventListener('click', function(e) { e.preventDefault(); switchSource('upload'); });
+    }
+
+    function refreshLibraryPlans() {
+        if (!libraryPlans) return;
+        var vid = venueSelect ? parseInt(venueSelect.value, 10) : 0;
+        var plans = (vid && allVenuePlans[vid]) ? allVenuePlans[vid] : [];
+
+        libraryPlans.innerHTML = '';
+        if (!vid) {
+            if (libraryNoVenue) libraryNoVenue.style.display = '';
+            if (libraryEmpty)   libraryEmpty.style.display   = 'none';
+            return;
+        }
+        if (libraryNoVenue) libraryNoVenue.style.display = 'none';
+
+        if (plans.length === 0) {
+            if (libraryEmpty) libraryEmpty.style.display = '';
+            return;
+        }
+        if (libraryEmpty) libraryEmpty.style.display = 'none';
+
+        var currentPid = planIdInput ? parseInt(planIdInput.value, 10) : 0;
+        if (!currentPid && preselectedPlanId) currentPid = preselectedPlanId;
+
+        plans.forEach(function(plan) {
+            var div = document.createElement('div');
+            div.className = 'library-plan-option' + (plan.id === currentPid ? ' selected' : '');
+            div.innerHTML =
+                '<input type="radio" name="_plan_radio" value="' + plan.id + '"' + (plan.id === currentPid ? ' checked' : '') + '>' +
+                '<span class="library-plan-option-name">' + escapeHtml(plan.name) + '</span>' +
+                '<span class="library-plan-option-preview"><a href="' + escapeHtml(plan.pdf_path) + '" target="_blank" ' +
+                  'class="btn btn-sm btn-secondary" onclick="event.stopPropagation()">Preview</a></span>';
+            div.addEventListener('click', function() {
+                document.querySelectorAll('.library-plan-option').forEach(function(el) { el.classList.remove('selected'); });
+                div.classList.add('selected');
+                div.querySelector('input[type=radio]').checked = true;
+                if (planIdInput) planIdInput.value = plan.id;
+            });
+            libraryPlans.appendChild(div);
+            if (plan.id === currentPid && planIdInput) planIdInput.value = plan.id;
+        });
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    if (venueSelect) {
+        venueSelect.addEventListener('change', function() {
+            if (activeSource === 'library') refreshLibraryPlans();
+        });
+    }
+
+    // Initialise on load
+    switchSource(activeSource);
 });
 </script>
 <?php endif; ?>

@@ -41,6 +41,7 @@ class AreaController
         Permission::requirePerm('create', 'areas');
 
         $venues = Venue::all();
+        $allVenuePlans = VenuePlan::allGroupedByVenue();
         require __DIR__ . '/../views/areas/form.php';
     }
 
@@ -50,8 +51,9 @@ class AreaController
         Permission::requirePerm('create', 'areas');
         Csrf::requireValidToken();
 
-        $venueId = (int) ($_POST['venue_id'] ?? 0);
+        $venueId  = (int) ($_POST['venue_id'] ?? 0);
         $areaName = trim($_POST['area_name'] ?? '');
+        $planId   = (int) ($_POST['plan_id'] ?? 0);
 
         if (empty($venueId) || empty($areaName)) {
             $_SESSION['flash_error'] = 'Venue and area name are required';
@@ -59,40 +61,65 @@ class AreaController
             exit;
         }
 
-        // Handle PDF upload
-        if (!isset($_FILES['pdf_file']) || $_FILES['pdf_file']['error'] !== UPLOAD_ERR_OK) {
-            $_SESSION['flash_error'] = 'PDF file is required';
-            header('Location: /areas/create');
-            exit;
-        }
+        $pdfPath = null;
 
-        $file = $_FILES['pdf_file'];
+        if ($planId > 0) {
+            // Use a plan from the venue plan library — copy it so areas are independent
+            $plan = VenuePlan::find($planId);
+            if (!$plan || (int)$plan['venue_id'] !== $venueId) {
+                $_SESSION['flash_error'] = 'Selected plan not found in this venue\'s library';
+                header('Location: /areas/create?venue_id=' . $venueId);
+                exit;
+            }
 
-        // Validate PDF
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
+            $srcPath  = __DIR__ . '/../../public' . $plan['pdf_path'];
+            $filename = uniqid('area_') . '.pdf';
+            $destPath = __DIR__ . '/../../public/uploads/' . $filename;
 
-        if ($mimeType !== 'application/pdf') {
-            $_SESSION['flash_error'] = 'Only PDF files are allowed';
-            header('Location: /areas/create');
-            exit;
-        }
+            if (!copy($srcPath, $destPath)) {
+                $_SESSION['flash_error'] = 'Failed to copy plan from library';
+                header('Location: /areas/create?venue_id=' . $venueId);
+                exit;
+            }
 
-        // Generate unique filename
-        $filename = uniqid('area_') . '.pdf';
-        $uploadPath = __DIR__ . '/../../public/uploads/' . $filename;
+            $pdfPath = '/uploads/' . $filename;
 
-        if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            $_SESSION['flash_error'] = 'Failed to upload file';
-            header('Location: /areas/create');
-            exit;
+        } else {
+            // Fresh PDF upload
+            if (!isset($_FILES['pdf_file']) || $_FILES['pdf_file']['error'] !== UPLOAD_ERR_OK) {
+                $_SESSION['flash_error'] = 'PDF file is required';
+                header('Location: /areas/create');
+                exit;
+            }
+
+            $file = $_FILES['pdf_file'];
+
+            $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            if ($mimeType !== 'application/pdf') {
+                $_SESSION['flash_error'] = 'Only PDF files are allowed';
+                header('Location: /areas/create');
+                exit;
+            }
+
+            $filename   = uniqid('area_') . '.pdf';
+            $uploadPath = __DIR__ . '/../../public/uploads/' . $filename;
+
+            if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                $_SESSION['flash_error'] = 'Failed to upload file';
+                header('Location: /areas/create');
+                exit;
+            }
+
+            $pdfPath = '/uploads/' . $filename;
         }
 
         $areaId = Area::create([
-            'venue_id' => $venueId,
-            'area_name' => $areaName,
-            'pdf_path' => '/uploads/' . $filename,
+            'venue_id'    => $venueId,
+            'area_name'   => $areaName,
+            'pdf_path'    => $pdfPath,
             'uploaded_by' => Auth::id()
         ]);
 

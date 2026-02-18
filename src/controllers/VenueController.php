@@ -24,6 +24,7 @@ class VenueController
         }
 
         $areas = Venue::getAreas($id);
+        $venuePlans = VenuePlan::findByVenue($id);
         require __DIR__ . '/../views/venues/show.php';
     }
 

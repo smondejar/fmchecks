@@ -111,6 +111,19 @@ CREATE TABLE IF NOT EXISTS check_logs (
     INDEX idx_performed_at (performed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Venue Plans table (plan library per venue)
+CREATE TABLE IF NOT EXISTS venue_plans (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    venue_id    INT UNSIGNED NOT NULL,
+    name        VARCHAR(255) NOT NULL,
+    pdf_path    VARCHAR(500) NOT NULL,
+    uploaded_by INT UNSIGNED NOT NULL,
+    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (venue_id)    REFERENCES venues(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id),
+    INDEX idx_venue_id (venue_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Reports table
 CREATE TABLE IF NOT EXISTS reports (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

@@ -66,7 +66,9 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     <!-- Stats Grid -->
     <div class="stats-grid">
         <div class="stat-card <?= $overdueCount > 0 ? 'stat-critical' : '' ?>">
-            <div class="stat-icon">⚠️</div>
+            <div class="stat-icon stat-icon-danger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
             <div class="stat-info">
                 <h3><?= $overdueCount ?></h3>
                 <p>Overdue Checks</p>
@@ -74,7 +76,9 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
         </div>
 
         <div class="stat-card <?= $dueSoonCount > 0 ? 'stat-warning' : '' ?>">
-            <div class="stat-icon">⏰</div>
+            <div class="stat-icon stat-icon-warning">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
             <div class="stat-info">
                 <h3><?= $dueSoonCount ?></h3>
                 <p>Due Soon</p>
@@ -82,7 +86,9 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
         </div>
 
         <div class="stat-card <?= $openReports > 0 ? 'stat-warning' : '' ?>">
-            <div class="stat-icon">📋</div>
+            <div class="stat-icon stat-icon-info">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+            </div>
             <div class="stat-info">
                 <h3><?= $openReports ?></h3>
                 <p>Open Reports</p>
@@ -90,7 +96,9 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
         </div>
 
         <div class="stat-card <?= $criticalReports > 0 ? 'stat-critical' : '' ?>">
-            <div class="stat-icon">🚨</div>
+            <div class="stat-icon stat-icon-danger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
             <div class="stat-info">
                 <h3><?= $criticalReports ?></h3>
                 <p>Critical Issues</p>
@@ -101,7 +109,7 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     <!-- Overdue Checks Alert -->
     <?php if (!empty($overdueChecks)): ?>
     <div class="alert alert-danger mt-4">
-        <h4>⚠️ <?= $overdueCount ?> Overdue Check<?= $overdueCount != 1 ? 's' : '' ?></h4>
+        <h4><?= $overdueCount ?> Overdue Check<?= $overdueCount != 1 ? 's' : '' ?></h4>
         <div class="overdue-list">
             <?php foreach ($overdueChecks as $cp): ?>
             <div class="overdue-item">
@@ -124,7 +132,7 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     <!-- Due Soon Checks -->
     <?php if (!empty($dueSoonChecks)): ?>
     <div class="alert alert-warning mt-4">
-        <h4>⏰ <?= $dueSoonCount ?> Check<?= $dueSoonCount != 1 ? 's' : '' ?> Due Soon</h4>
+        <h4><?= $dueSoonCount ?> Check<?= $dueSoonCount != 1 ? 's' : '' ?> Due Soon</h4>
         <div class="due-soon-list">
             <?php foreach ($dueSoonChecks as $cp): ?>
             <div class="due-item">
@@ -146,7 +154,10 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     <?php if (!empty($venues)): ?>
     <div class="card mt-4">
         <div class="card-header">
-            <h3>📍 Quick Access</h3>
+            <h3>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:0.375rem;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Quick Access
+            </h3>
         </div>
         <div class="venue-grid">
             <?php foreach ($venues as $venue):
@@ -158,7 +169,8 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
                 <div class="area-links">
                     <?php foreach ($venueAreas as $area): ?>
                     <a href="/areas/<?= $area['id'] ?>" class="area-link">
-                        📐 <?= htmlspecialchars($area['area_name']) ?>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg>
+                        <?= htmlspecialchars($area['area_name']) ?>
                     </a>
                     <?php endforeach; ?>
                 </div>
@@ -175,7 +187,10 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     <?php if (!empty($recentReports)): ?>
     <div class="card mt-4">
         <div class="card-header">
-            <h3>📋 Recent Issues</h3>
+            <h3>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:0.375rem;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+                Recent Issues
+            </h3>
             <a href="/reports" class="btn btn-sm btn-primary">View All</a>
         </div>
         <div class="report-list">
@@ -199,14 +214,18 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     <div class="quick-actions-grid mt-4">
         <?php if (Permission::can('create', 'reports')): ?>
         <a href="/reports/create" class="action-card action-warning">
-            <div class="action-icon">📝</div>
+            <div class="action-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
             <div class="action-label">Report Issue</div>
         </a>
         <?php endif; ?>
 
         <?php if (Permission::can('view', 'reports')): ?>
         <a href="/reports" class="action-card action-info">
-            <div class="action-icon">📊</div>
+            <div class="action-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+            </div>
             <div class="action-label">View Reports</div>
         </a>
         <?php endif; ?>
@@ -215,11 +234,11 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
 </div>
 
 <style>
-/* Dashboard mobile-optimized styles */
+/* ── Stats grid ──────────────────────────────────── */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
+    gap: 0.875rem;
     margin-bottom: 1rem;
 }
 
@@ -229,41 +248,49 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     padding: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.875rem;
     box-shadow: var(--shadow);
+    border-left: 3px solid transparent;
 }
 
-.stat-card.stat-critical {
-    background: #fef2f2;
-    border-left: 3px solid var(--danger);
-}
+.stat-card.stat-critical { border-left-color: var(--danger); }
+.stat-card.stat-warning  { border-left-color: var(--warning); }
 
-.stat-card.stat-warning {
-    background: #fef3c7;
-    border-left: 3px solid var(--warning);
-}
-
+/* SVG icon container — matches sidebar logo-icon style */
 .stat-icon {
-    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
+.stat-icon-danger  { background: #fee2e2; color: var(--danger); }
+.stat-icon-warning { background: #fef3c7; color: var(--warning); }
+.stat-icon-info    { background: #dbeafe; color: var(--primary); }
+.stat-icon-success { background: #dcfce7; color: var(--success); }
 
 .stat-info h3 {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
+    line-height: 1.1;
 }
 
 .stat-info p {
     margin: 0;
-    font-size: 0.875rem;
-    color: var(--gray-600);
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-top: 0.125rem;
 }
 
+/* ── Overdue / Due soon alert lists ─────────────── */
 .overdue-list, .due-soon-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
 }
 
 .overdue-item, .due-item {
@@ -271,89 +298,101 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem;
+    padding: 0.625rem 0.75rem;
     background: white;
-    border-radius: var(--radius);
-    font-size: 0.9rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
 }
 
-.overdue-item strong, .due-item strong {
-    color: var(--danger);
-}
+.overdue-item strong { color: var(--danger); }
 
 .location {
-    color: var(--gray-600);
-    font-size: 0.875rem;
+    color: var(--gray-500);
+    font-size: 0.75rem;
 }
 
 .last-check {
     color: var(--gray-500);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     margin-left: auto;
 }
 
+/* ── Venue / area quick access ───────────────────── */
 .venue-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.875rem;
     padding: 1rem;
 }
 
 .venue-card {
-    padding: 1rem;
+    padding: 0.875rem;
     border: 1px solid var(--gray-200);
     border-radius: var(--radius);
+    background: white;
 }
 
 .venue-card h4 {
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 0.625rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
 }
 
 .area-links {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.375rem;
 }
 
 .area-link {
-    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.4375rem 0.625rem;
     background: var(--gray-50);
-    border-radius: var(--radius);
-    font-size: 0.875rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
     text-decoration: none;
-    color: var(--gray-800);
-    transition: background 0.2s;
+    color: var(--gray-700);
+    transition: background 0.15s, color 0.15s;
 }
 
 .area-link:hover {
     background: var(--primary-light);
+    color: var(--primary);
 }
 
+/* ── Recent reports list ─────────────────────────── */
 .report-list {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .report-item {
-    padding: 0.75rem;
+    padding: 0.625rem 0.75rem;
     border: 1px solid var(--gray-200);
-    border-radius: var(--radius);
+    border-radius: 6px;
+    background: white;
+    font-size: 0.8125rem;
 }
 
 .report-meta {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.5rem;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--gray-500);
 }
 
+/* ── Quick action cards ──────────────────────────── */
 .quick-actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.875rem;
 }
 
 .action-card {
@@ -361,48 +400,88 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 1rem;
     background: white;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     text-decoration: none;
-    color: var(--gray-800);
-    transition: transform 0.2s, box-shadow 0.2s;
+    color: var(--gray-700);
+    transition: transform 0.15s, box-shadow 0.15s;
+    border-top: 3px solid transparent;
+    gap: 0.625rem;
 }
 
 .action-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 .action-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--gray-100);
 }
 
 .action-label {
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     text-align: center;
+    color: var(--gray-700);
 }
 
-.action-primary { border-top: 3px solid var(--primary); }
-.action-warning { border-top: 3px solid var(--warning); }
-.action-info { border-top: 3px solid #0ea5e9; }
-.action-success { border-top: 3px solid var(--success); }
+.action-primary { border-top-color: var(--primary); }
+.action-primary .action-icon { background: #dbeafe; color: var(--primary); }
 
+.action-warning { border-top-color: var(--warning); }
+.action-warning .action-icon { background: #fef3c7; color: var(--warning); }
+
+.action-info { border-top-color: #0ea5e9; }
+.action-info .action-icon { background: #e0f2fe; color: #0284c7; }
+
+.action-success { border-top-color: var(--success); }
+.action-success .action-icon { background: #dcfce7; color: var(--success); }
+
+/* ── Dark mode overrides ─────────────────────────── */
+.dark-mode .stat-card          { background: #1e293b; }
+.dark-mode .stat-card.stat-critical { background: rgba(220,38,38,0.08); }
+.dark-mode .stat-card.stat-warning  { background: rgba(217,119,6,0.08); }
+.dark-mode .stat-icon-danger   { background: rgba(220,38,38,0.2);  color: #f87171; }
+.dark-mode .stat-icon-warning  { background: rgba(217,119,6,0.2);  color: #fbbf24; }
+.dark-mode .stat-icon-info     { background: rgba(37,99,235,0.2);   color: #60a5fa; }
+.dark-mode .stat-icon-success  { background: rgba(22,163,74,0.2);   color: #4ade80; }
+
+.dark-mode .overdue-item,
+.dark-mode .due-item           { background: #0f172a; }
+
+.dark-mode .venue-card         { background: #0f172a; border-color: #334155; }
+.dark-mode .venue-card h4 a    { color: var(--gray-300); }
+
+.dark-mode .area-link          { background: #1e293b; color: var(--gray-400); }
+.dark-mode .area-link:hover    { background: rgba(37,99,235,0.2); color: #60a5fa; }
+
+.dark-mode .report-item        { background: #0f172a; border-color: #334155; }
+.dark-mode .report-item a      { color: var(--gray-300); }
+
+.dark-mode .action-card        { background: #1e293b; color: var(--gray-300); }
+.dark-mode .action-label       { color: var(--gray-300); }
+.dark-mode .action-warning .action-icon { background: rgba(217,119,6,0.2);  color: #fbbf24; }
+.dark-mode .action-info .action-icon    { background: rgba(14,165,233,0.2); color: #38bdf8; }
+.dark-mode .action-primary .action-icon { background: rgba(37,99,235,0.2);  color: #60a5fa; }
+.dark-mode .action-success .action-icon { background: rgba(22,163,74,0.2);  color: #4ade80; }
+
+/* ── Responsive ──────────────────────────────────── */
 @media (max-width: 768px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .stats-grid           { grid-template-columns: repeat(2, 1fr); }
+    .venue-grid           { grid-template-columns: 1fr; padding: 0.75rem; }
+    .quick-actions-grid   { grid-template-columns: repeat(2, 1fr); }
+}
 
-    .venue-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .quick-actions-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+@media (max-width: 400px) {
+    .stats-grid           { grid-template-columns: 1fr; }
 }
 </style>
 

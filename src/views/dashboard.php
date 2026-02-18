@@ -6,11 +6,9 @@ require __DIR__ . '/layout/header.php';
 // Get dashboard stats
 $pdo = Database::connect();
 
-// Venues and areas
+// Venues and areas (for quick access widget)
 $venues = Venue::all();
 $areas = Area::all();
-$venueCount = count($venues);
-$areaCount = count($areas);
 
 // Reports stats
 $openReports = Report::getOpenCount();
@@ -67,22 +65,6 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
 <div class="dashboard">
     <!-- Stats Grid -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">🏢</div>
-            <div class="stat-info">
-                <h3><?= $venueCount ?></h3>
-                <p>Venues</p>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon">📐</div>
-            <div class="stat-info">
-                <h3><?= $areaCount ?></h3>
-                <p>Areas</p>
-            </div>
-        </div>
-
         <div class="stat-card <?= $overdueCount > 0 ? 'stat-critical' : '' ?>">
             <div class="stat-icon">⚠️</div>
             <div class="stat-info">
@@ -229,12 +211,6 @@ $upcomingChecks = array_slice($upcomingChecks, 0, 5);
         </a>
         <?php endif; ?>
 
-        <?php if (Permission::can('create', 'venues')): ?>
-        <a href="/venues/create" class="action-card action-success">
-            <div class="action-icon">➕</div>
-            <div class="action-label">New Venue</div>
-        </a>
-        <?php endif; ?>
     </div>
 </div>
 

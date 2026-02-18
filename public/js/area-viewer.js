@@ -2,7 +2,8 @@
 
 let pdfDoc = null;
 let pageNum = 1;
-let scale = 1.0;
+let scale = 1.0;      // user zoom multiplier (1 = fit to container width)
+let fitScale = 1.0;   // auto-computed to fit container width
 let canvas = null;
 let ctx = null;
 let isAddingCheckPoint = false;
@@ -12,6 +13,12 @@ let draggedPoint = null;
 let dragOffset = { x: 0, y: 0 };
 let selectedPoint = null;
 let pdfRendered = false;
+
+// Debounce helper
+function debounce(fn, ms) {
+    let timer;
+    return function() { clearTimeout(timer); timer = setTimeout(fn, ms); };
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -24,6 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof area !== 'undefined' && area.pdf_path) {
         loadPDF(area.pdf_path);
     }
+
+    // Re-render on window resize (debounced) to keep canvas fitting the container
+    window.addEventListener('resize', debounce(function() {
+        if (pdfRendered) renderPage(pageNum);
+    }, 200));
 
     // Setup controls
     setupControls();
@@ -57,17 +69,15 @@ function setupControls() {
 
     if (zoomIn) {
         zoomIn.addEventListener('click', function() {
-            scale += 0.2;
+            scale = Math.min(5, scale + 0.25);
             renderPage(pageNum);
         });
     }
 
     if (zoomOut) {
         zoomOut.addEventListener('click', function() {
-            if (scale > 0.4) {
-                scale -= 0.2;
-                renderPage(pageNum);
-            }
+            scale = Math.max(0.25, scale - 0.25);
+            renderPage(pageNum);
         });
     }
 
@@ -173,8 +183,18 @@ function setupControls() {
 // Render just the PDF onto the canvas (no checkpoints), then call onDone if provided
 function renderPdfOnly(onDone) {
     pdfDoc.getPage(pageNum).then(function(page) {
-        const viewport = page.getViewport({ scale: scale });
-        const hasCrop  = area.crop_w && area.crop_w < 0.9999;
+        // Compute fitScale: scale so the PDF (or crop) fills the container width
+        const container = canvas.parentElement;
+        const availableWidth = container ? (container.clientWidth - 2) : 800;
+
+        const naturalVp = page.getViewport({ scale: 1.0 });
+        const hasCrop   = area.crop_w && area.crop_w < 0.9999;
+        const naturalW  = hasCrop ? naturalVp.width * (area.crop_w || 1) : naturalVp.width;
+
+        fitScale = availableWidth > 0 ? Math.min(2.5, availableWidth / naturalW) : 1.0;
+
+        const effectiveScale = fitScale * scale;
+        const viewport = page.getViewport({ scale: effectiveScale });
 
         if (hasCrop) {
             const offscreen = document.createElement('canvas');

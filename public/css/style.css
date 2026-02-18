@@ -24,7 +24,9 @@
     --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
 }
 
-/* Dark Mode Variables — inverts all gray scale */
+/* Dark Mode Variables — inverts all gray scale.
+   NOTE: in dark mode, var(--gray-50..300) become dark values, var(--gray-600..900) become light.
+   Always use hardcoded hex or high-numbered vars in .dark-mode { } rule overrides. */
 .dark-mode {
     --gray-50: #111827;
     --gray-100: #1f2937;
@@ -226,7 +228,7 @@ body {
 }
 
 .dark-mode .sidebar-toggle {
-    color: var(--gray-400);
+    color: #94a3b8;
 }
 
 .sidebar-toggle:hover {
@@ -393,7 +395,7 @@ body {
 
 .dark-mode .btn-secondary {
     background: rgba(255,255,255,0.08);
-    color: var(--gray-300);
+    color: #cbd5e1;
     border-color: rgba(255,255,255,0.12);
 }
 
@@ -490,7 +492,7 @@ body {
 }
 
 .dark-mode .form-group label {
-    color: var(--gray-400);
+    color: #94a3b8;
 }
 
 .form-control {
@@ -1045,7 +1047,7 @@ body {
 }
 
 .dark-mode .modal-body p {
-    color: var(--gray-400);
+    color: #94a3b8;
 }
 
 .btn-close {
@@ -1082,6 +1084,9 @@ body {
 .text-danger { color: var(--danger); }
 .text-success { color: var(--success); }
 .text-warning { color: var(--warning); }
+
+/* Dark mode: ensure muted text is still visible */
+.dark-mode .text-muted { color: #64748b; }
 
 .mt-2 { margin-top: 0.5rem; }
 .mt-3 { margin-top: 0.875rem; }
